@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="utf-8">
+		<title>dream</title>
+		<style>
+			body {
+				margin: 0;
+				width: 100vw;
+				height: 100vh;
+				background: url('img/bg1.jpg') no-repeat;
+				background-size: 100% auto;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+			}
+
+			.flexsb {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+			}
+
+			.box {
+				width: 85%;
+				height: 85%;
+				background: linear-gradient(135deg,
+						rgba(87, 194, 255, 0.5) 0%,
+						rgba(247, 112, 184, 0.5) 50%,
+						rgba(140, 114, 236, 0.5) 100%);
+				background-size: 200% 200%;
+				animation: shine 3s infinite linear;
+				border-radius: 12px;
+				position: relative;
+				overflow: hidden;
+				box-shadow: inset 0 0 15px rgb(255, 255, 255);
+			}
+
+			@keyframes shine {
+				0% {
+					background-position: 0% 0%;
+				}
+
+				50% {
+					background-position: 100% 100%;
+				}
+
+				100% {
+					background-position: 0% 0%;
+				}
+			}
+
+			.container {
+				position: absolute;
+				width: 100%;
+				height: 100%;
+				box-sizing: border-box;
+				padding: 0 3%;
+			}
+
+			.container>div {
+				width: 29%;
+				background: rgba(255, 255, 255, .2);
+				height: 80%;
+				border-radius: 20px;
+				box-sizing: border-box;
+				padding: 20px;
+				padding-top: 30px;
+				box-shadow: inset 0 0 15px rgb(255, 255, 255);
+			}
+
+			.tit {
+				color: #fff;
+				font-size: 24px;
+				letter-spacing: 2px;
+				margin-bottom: 25px;
+				font-weight: bold;
+			}
+
+			.container>.right {
+				width: 28%;
+			}
+
+			.container>.left {
+				height: auto;
+			}
+
+			.container>.left>.item {
+				margin-bottom: 25px;
+			}
+
+			.container>.left>.item>* {
+				background: #fff;
+				width: 100%;
+				border-radius: 5px;
+				border: none;
+				outline: none;
+				padding-left: 5px;
+				box-sizing: border-box;
+			}
+
+			.container>.left>.item>input {
+				height: 50px;
+			}
+
+			.container>.left>.item>textarea {
+				height: 200px;
+				padding-top: 10px;
+			}
+
+			.btn>button {
+				border: none;
+				height: 45px;
+				border-radius: 10px;
+				width: 40%;
+				color: #fff;
+				font-weight: bold;
+				font-size: 16px;
+				letter-spacing: 4px;
+			}
+
+			.list {
+				height: 88%;
+				overflow: hidden;
+				overflow-y: auto;
+			}
+
+			.list>.item {
+				padding: 10px;
+				box-sizing: border-box;
+				margin-bottom: 25px;
+			}
+
+			.list>.item>.top>div {
+				display: flex;
+				align-items: center;
+				font-size: 14px;
+				font-weight: bold;
+				color: #fff;
+			}
+
+			.list>.item>.top>div>img {
+				width: 40px;
+				height: 40px;
+				border-radius: 100%;
+				margin-right: 5px;
+				border: 2px solid #fff;
+			}
+
+			.list>.item>.top>span {
+				font-size: 12px;
+				color: #fff;
+			}
+
+			.list>.item>.btm {
+				color: #fff;
+				margin-top: 10px;
+				font-size: 14px;
+			}
+
+			.yining {
+				box-shadow: 0 4px 5px rgba(0, 0, 0, .3);
+			}
+
+			.bg {
+				background: linear-gradient(135deg, #4dc6ff, #ff67b8);
+			}
+		</style>
+	</head>
+
+	<body>
+		<div class="box">
+			<div class="container flexsb">
+				<div class="left">
+					<div class="tit">留言建议</div>
+					<div class="item yining"><input type="text" placeholder="请输入你的昵称" class="name"></div>
+					<div class="item yining"><textarea placeholder="请输入留言内容" class="text"></textarea></div>
+					<div class="btn flexsb">
+						<button class="yining clear bg">清空</button>
+						<button class="yining OK bg">提交</button>
+					</div>
+				</div>
+				<div class="right">
+					<div class="tit">留言板</div>
+					<div class="list">
+						<div class="item yining bg">
+							<div class="top flexsb">
+								<div>
+									<img src="img/img.jpg" alt="" />
+									<div>初音未来</div>
+								</div>
+								<span>发布于:2025/9/22 07:42:35</span>
+							</div>
+							<div class="btm">
+								你好！
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script>
+			window.onclick = function () {
+				document.querySelector('.OK').onclick = function () {
+					let name = document.querySelector('.name').value;
+					let text = document.querySelector('.text').value;
+					let now = new Date().toLocaleString();
+					if (name == '' || text == '') {
+						alert('输入框不能为空！');
+						return;
+					}
+					document.querySelector('.list').innerHTML += `
+						<div class="item yining bg">
+							<div class="top flexsb">
+								<div>
+									<img src="img/img.jpg" alt="" />
+									<div>${name}</div>
+								</div>
+								<span>发布于:${now}</span>
+							</div>
+							<div class="btm">
+								${text}
+							</div>
+						</div>
+					`
+					clear();
+				}
+
+				function clear() {
+					document.querySelector('.name').value = '';
+					document.querySelector('.text').value = '';
+				}
+				document.querySelector('.clear').onclick = clear;
+			}
+		</script>
+	</body>
+
+</html>

@@ -9,10 +9,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
- * Classname AppVersionVO
- * Description
- * Date 2025/9/21 22:19
- * Created by womon
+ * 应用版本详情VO
  */
 @Data
 @AllArgsConstructor
@@ -49,10 +46,15 @@ public class AppVersionVO {
      * 版本说明，类似于 git commit message
      */
     private String message;
+
+    /**
+     * 关联的对话id，用于追溯版本来源
+     */
+    private Long chatHistoryId;
+
     /**
      * 创建时间
      */
-
     private LocalDateTime createTime;
 
     /**

@@ -129,6 +129,13 @@ const viewWork = (app: API.AppVO) => {
   }
 }
 
+// 查看版本管理
+const viewVersions = (appId: string | number | undefined) => {
+  if (appId) {
+    router.push(`/app/versions/${appId}`)
+  }
+}
+
 // 格式化时间函数已移除，不再需要显示创建时间
 
 // 页面加载时获取数据
@@ -233,6 +240,7 @@ onMounted(() => {
             :app="app"
             @view-chat="viewChat"
             @view-work="viewWork"
+            @view-versions="viewVersions"
           />
         </div>
         <div class="pagination-wrapper">
@@ -258,6 +266,7 @@ onMounted(() => {
             :featured="true"
             @view-chat="viewChat"
             @view-work="viewWork"
+            @view-versions="viewVersions"
           />
         </div>
         <div class="pagination-wrapper">

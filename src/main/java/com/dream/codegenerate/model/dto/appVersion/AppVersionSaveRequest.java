@@ -1,28 +1,17 @@
-package com.dream.codegenerate.model.vo.appVersion;
-
-/**
- * Classname App
- * Description
- * Date 2025/9/21 22:11
- * Created by womon
- */
+package com.dream.codegenerate.model.dto.appVersion;
 
 import com.dream.codegenerate.model.enums.AppVersionStoreTypeEnum;
-import lombok.Builder;
 import lombok.Data;
 
 import java.io.Serializable;
 
 /**
- * 对话历史查询列表封装类
+ * 应用版本保存请求
  */
 @Data
-@Builder
-public class AppVersionQueryVO  implements Serializable {
-    /**
-     * id
-     */
-    private Long id;
+public class AppVersionSaveRequest implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     /**
      * 应用id
@@ -30,9 +19,9 @@ public class AppVersionQueryVO  implements Serializable {
     private Long appId;
 
     /**
-     * 版本号，例如 1, 2, 3...
+     * 代码内容（JSON格式）
      */
-    private Integer version;
+    private String content;
 
     /**
      * 存储类型 (full, diff)
@@ -44,4 +33,8 @@ public class AppVersionQueryVO  implements Serializable {
      */
     private String message;
 
+    /**
+     * 关联的对话id，用于追溯版本来源
+     */
+    private Long chatHistoryId;
 }

@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * 对话历史 服务层实现。
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
+ *
  */
 @Service
 @Slf4j
@@ -41,7 +41,7 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
     private AppService appService;
 
     @Override
-    public boolean addChatMessage(Long appId, String message, String messageType, Long userId) {
+    public Long addChatMessage(Long appId, String message, String messageType, Long userId) {
         // 基础校验
         ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用ID不能为空");
         ThrowUtils.throwIf(StrUtil.isBlank(message), ErrorCode.PARAMS_ERROR, "消息内容不能为空");
@@ -57,7 +57,9 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
                 .messageType(messageType)
                 .userId(userId)
                 .build();
-        return this.save(chatHistory);
+        this.save(chatHistory);
+        // 返回新记录的ID
+        return chatHistory.getId();
     }
 
     @Override

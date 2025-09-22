@@ -70,6 +70,7 @@
         <template v-else-if="column.key === 'action'">
           <a-space>
             <a-button type="primary" size="small" @click="editApp(record)"> 编辑 </a-button>
+            <a-button type="default" size="small" @click="viewVersions(record)"> 版本管理 </a-button>
             <a-button
               type="default"
               size="small"
@@ -149,7 +150,7 @@ const columns = [
   {
     title: '操作',
     key: 'action',
-    width: 200,
+    width: 280,
     fixed: 'right',
   },
 ]
@@ -259,6 +260,11 @@ const deleteApp = async (id: number | undefined) => {
     console.error('删除失败：', error)
     message.error('删除失败')
   }
+}
+
+// 查看版本管理
+const viewVersions = (app: API.AppVO) => {
+  router.push(`/app/versions/${app.id}`)
 }
 </script>
 

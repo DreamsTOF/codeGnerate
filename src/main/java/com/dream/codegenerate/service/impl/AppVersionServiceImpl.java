@@ -2,6 +2,14 @@ package com.dream.codegenerate.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.ObjUtil;
+import com.dream.codegenerate.exception.BusinessException;
+import com.dream.codegenerate.model.dto.appVersion.AppVersionCompareRequest;
+import com.dream.codegenerate.model.dto.appVersion.AppVersionRestoreRequest;
+import com.dream.codegenerate.model.dto.appVersion.AppVersionSaveRequest;
+import com.dream.codegenerate.model.enums.AppVersionStoreTypeEnum;
+import com.dream.codegenerate.model.vo.appVersion.AppVersionCompareVO;
+import com.dream.codegenerate.model.vo.appVersion.AppVersionRestoreVO;
+import com.dream.codegenerate.model.vo.appVersion.AppVersionVO;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
@@ -17,25 +25,72 @@ import com.dream.codegenerate.model.vo.appVersion.AppVersionQueryVO;
 import com.dream.codegenerate.service.AppService;
 import com.dream.codegenerate.service.AppVersionService;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.dream.codegenerate.model.entity.table.AppVersionTableDef.APP_VERSION;
 import static com.mybatisflex.core.query.QueryMethods.ifNull;
 
 /**
  * 应用版本 服务层实现。
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
+ * dream
  */
 @Service
+@Slf4j
 public class AppVersionServiceImpl extends ServiceImpl<AppVersionMapper, AppVersion>  implements AppVersionService{
 
     @Resource
+    @Lazy
     private AppService appService;
+
+    @Transactional
+    @Override
+    public Long createNewVersion(AppVersionSaveRequest appVersionSaveRequest, User loginUser) {
+        Long appId = appVersionSaveRequest.getAppId();
+        String codeContent = appVersionSaveRequest.getContent();
+        Long chatHistoryId = appVersionSaveRequest.getChatHistoryId();
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用ID错误");
+
+        checkAppPermission(appId, loginUser);
+        // 1. 获取当前最新版本号
+        QueryWrapper queryWrapper = QueryWrapper.create()
+                .select(APP_VERSION.VERSION)
+                .from(APP_VERSION)
+                .where(APP_VERSION.APP_ID.eq(appId))
+                .orderBy(APP_VERSION.VERSION.desc())
+                .limit(1);
+        AppVersion latestVersion = this.getOne(queryWrapper);
+
+        int nextVersion = 1;
+        if (latestVersion != null && latestVersion.getVersion() != null) {
+            nextVersion = latestVersion.getVersion() + 1;
+        }
+
+        // 2. 构建新版本对象并保存
+        AppVersion newAppVersion = AppVersion.builder()
+                .appId(appId)
+                .version(nextVersion)
+                .content(codeContent)
+                .storageType(AppVersionStoreTypeEnum.FULL) // 默认使用全量存储
+                .chatHistoryId(chatHistoryId) // 关联历史对话ID
+                .build();
+
+        boolean result = this.save(newAppVersion);
+        if (!result || newAppVersion.getId() == null) {
+            log.error("自动创建应用版本失败, appId: {}", appId);
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "创建版本失败");
+        }
+        log.info("成功为应用 {} 创建新版本 V{}", appId, nextVersion);
+        return newAppVersion.getId();
+    }
 
     @Override
     public Page<AppVersionQueryVO> listByPage(AppVersionQueryRequest appVersionQueryRequest, User loginUser) {
@@ -99,4 +154,73 @@ public class AppVersionServiceImpl extends ServiceImpl<AppVersionMapper, AppVers
                 .collect(Collectors.toList());
     }
 
+    @Override
+    public AppVersionRestoreVO restore(AppVersionRestoreRequest appVersionRestoreRequest, User loginUser) {
+        // TODO: 实现恢复版本逻辑
+        return null;
+    }
+    @Override
+    public AppVersionVO getAppVersionVOById(long id, User loginUser) {
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
+        // 1. 获取版本数据
+        AppVersion appVersion = this.getById(id);
+        ThrowUtils.throwIf(appVersion == null, ErrorCode.NOT_FOUND_ERROR, "版本不存在");
+        // 2. 权限校验
+        checkAppPermission(appVersion.getAppId(), loginUser);
+        // 3. 封装并返回
+        return AppVersion.toAppVersionVO(appVersion);
+    }
+    @Override
+    public AppVersionCompareVO compare(AppVersionCompareRequest appVersionCompareRequest, User loginUser) {
+        Long appId = appVersionCompareRequest.getAppId();
+        Integer fromVersionNum = appVersionCompareRequest.getFromVersion();
+        Integer toVersionNum = appVersionCompareRequest.getToVersion();
+
+        // 1. 参数校验
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用ID错误");
+        ThrowUtils.throwIf(fromVersionNum == null || fromVersionNum <= 0, ErrorCode.PARAMS_ERROR, "起始版本号错误");
+        ThrowUtils.throwIf(toVersionNum == null || toVersionNum <= 0, ErrorCode.PARAMS_ERROR, "目标版本号错误");
+        ThrowUtils.throwIf(fromVersionNum.equals(toVersionNum), ErrorCode.PARAMS_ERROR, "不能对比相同版本");
+
+        // 2. 权限校验
+        checkAppPermission(appId, loginUser);
+
+        // 3. 查询两个版本的完整信息
+        AppVersion fromVersion = getOne(
+                QueryWrapper.create().where(APP_VERSION.APP_ID.eq(appId)).and(APP_VERSION.VERSION.eq(fromVersionNum))
+        );
+        ThrowUtils.throwIf(fromVersion == null, ErrorCode.NOT_FOUND_ERROR, "起始版本不存在");
+
+        AppVersion toVersion = getOne(
+                QueryWrapper.create().where(APP_VERSION.APP_ID.eq(appId)).and(APP_VERSION.VERSION.eq(toVersionNum))
+        );
+        ThrowUtils.throwIf(toVersion == null, ErrorCode.NOT_FOUND_ERROR, "目标版本不存在");
+
+        // 4. 封装返回
+        AppVersionVO fromVersionVO = AppVersion.toAppVersionVO(fromVersion);
+        AppVersionVO toVersionVO = AppVersion.toAppVersionVO(toVersion);
+
+        return AppVersionCompareVO.builder()
+                .fromVersionData(fromVersionVO)
+                .toVersionData(toVersionVO)
+                .build();
+    }
+
+    @Override
+    public boolean deleteByAppId(Long id, User loginUser) {
+        ThrowUtils.throwIf(id == null || id <= 0, ErrorCode.PARAMS_ERROR, "应用ID不能为空");
+        QueryWrapper queryWrapper = QueryWrapper.create()
+                .eq(String.valueOf(APP_VERSION.ID), id);
+        return this.remove(queryWrapper);
+    }
+    /**
+     * 内部方法：校验用户对应用的权限
+     */
+    private void checkAppPermission(Long appId, User loginUser) {
+        App app = appService.getById(appId);
+        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        boolean isAdmin = UserConstant.ADMIN_ROLE.equals(loginUser.getUserRole());
+        boolean isCreator = app.getUserId().equals(loginUser.getId());
+        ThrowUtils.throwIf(!isAdmin && !isCreator, ErrorCode.NO_AUTH_ERROR, "无权操作该应用");
+    }
 }

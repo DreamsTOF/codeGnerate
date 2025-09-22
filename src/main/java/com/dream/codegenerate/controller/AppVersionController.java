@@ -1,5 +1,13 @@
 package com.dream.codegenerate.controller;
 
+import com.dream.codegenerate.common.DeleteRequest;
+import com.dream.codegenerate.model.dto.appVersion.AppVersionCompareRequest;
+import com.dream.codegenerate.model.dto.appVersion.AppVersionRestoreRequest;
+import com.dream.codegenerate.model.dto.appVersion.AppVersionSaveRequest;
+import com.dream.codegenerate.model.vo.appVersion.AppVersionCompareVO;
+import com.dream.codegenerate.model.vo.appVersion.AppVersionRestoreVO;
+import com.dream.codegenerate.model.vo.appVersion.AppVersionVO;
+import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
 import com.mybatisflex.core.paginate.Page;
 import com.dream.codegenerate.common.BaseResponse;
 import com.dream.codegenerate.common.ResultUtils;
@@ -7,6 +15,7 @@ import com.dream.codegenerate.model.dto.appVersion.AppVersionQueryRequest;
 import com.dream.codegenerate.model.entity.User;
 import com.dream.codegenerate.model.vo.appVersion.AppVersionQueryVO;
 import com.dream.codegenerate.service.UserService;
+import io.swagger.annotations.ApiOperation;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -22,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * 应用版本 控制层。
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
+ * dream
  */
 @RestController
 @RequestMapping("/appVersion")
@@ -36,43 +45,22 @@ public class AppVersionController {
 
     /**
      * 保存应用版本。
-     *
-     * @param appVersion 应用版本
-     * @return {@code true} 保存成功，{@code false} 保存失败
+     * @param AppVersionSaveRequest 应用版本
+     * @return
      */
     @PostMapping("save")
-    public boolean save(@RequestBody AppVersion appVersion) {
-        return appVersionService.save(appVersion);
+    @ApiOperation("保存应用版本")
+    public BaseResponse<Long> save(@RequestBody AppVersionSaveRequest AppVersionSaveRequest,HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(appVersionService.createNewVersion(AppVersionSaveRequest, loginUser));
     }
-
-//    /**
-//     * 根据主键删除应用版本。
-//     *
-//     * @param id 主键
-//     * @return {@code true} 删除成功，{@code false} 删除失败
-//     */
-//    @DeleteMapping("remove/{id}")
-//    public boolean remove(@PathVariable Long id) {
-//        return appVersionService.removeById(id);
-//    }
-//
-//    /**
-//     * 根据主键更新应用版本。
-//     *
-//     * @param appVersion 应用版本
-//     * @return {@code true} 更新成功，{@code false} 更新失败
-//     */
-//    @PutMapping("update")
-//    public boolean update(@RequestBody AppVersion appVersion) {
-//        return appVersionService.updateById(appVersion);
-//    }
-
     /**
      * 查询所有应用版本。
      *
      * @return 所有数据
      */
     @GetMapping("list")
+    @ApiOperation("查询应用的所有版本")
     public BaseResponse<Page<AppVersionQueryVO>> list(@RequestBody AppVersionQueryRequest appVersionQueryRequest,
                                                 HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
@@ -86,9 +74,47 @@ public class AppVersionController {
      * @return 应用版本详情
      */
     @GetMapping("getInfo/{id}")
-    public AppVersion getInfo(@PathVariable Long id) {
-        return appVersionService.getById(id);
+    @ApiOperation("获取应用版本详情")
+    public BaseResponse<AppVersionVO> getInfo(@PathVariable Long id,  HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(appVersionService.getAppVersionVOById(id, loginUser));
+    }
+
+    /**
+     * 恢复应用版本
+     *
+     * @param appVersionRestoreRequest 版本恢复请求
+     * @param request HTTP请求
+     * @return 恢复的版本内容
+     */
+    @PostMapping("/restore")
+    @ApiOperation("恢复应用版本")
+    public BaseResponse<AppVersionRestoreVO> restore(@RequestBody AppVersionRestoreRequest appVersionRestoreRequest,
+                                                     HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(appVersionService.restore(appVersionRestoreRequest, loginUser));
+    }
+
+    /**
+     * @description: 对比两个版本的差异
+     * @author womon
+     * @date 2025/9/22 19:55
+     * @version 1.0
+     */
+
+    @PostMapping("/compare")
+    @ApiOperation("对比两个版本的差异")
+    public BaseResponse<AppVersionCompareVO> compare(@RequestBody AppVersionCompareRequest appVersionCompareRequest,
+                                                     HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(appVersionService.compare(appVersionCompareRequest, loginUser));
     }
 
 
+    @PostMapping("/delete")
+    @ApiOperation("删除应用版本")
+    public BaseResponse<Boolean> delete(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
+        User loginUser = userService.getLoginUser(request);
+        return ResultUtils.success(appVersionService.deleteByAppId(deleteRequest.getId(), loginUser));
+    }
 }
