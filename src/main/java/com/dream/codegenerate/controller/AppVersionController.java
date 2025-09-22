@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * 应用版本 控制层。
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
+ * dream
  */
 @RestController
 @RequestMapping("/appVersion")

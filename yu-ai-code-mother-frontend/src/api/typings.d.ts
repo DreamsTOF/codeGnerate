@@ -34,6 +34,47 @@ declare namespace API {
     appName?: string
   }
 
+  type AppVersionCompareRequest = {
+    appId?: number | string
+    fromVersion?: number
+    toVersion?: number
+  }
+
+  type AppVersionCompareVO = {
+    fromVersionData?: AppVersionVO
+    toVersionData?: AppVersionVO
+  }
+
+  type AppVersionQueryRequest = {
+    pageNum?: number
+    pageSize?: number
+    sortField?: string
+    sortOrder?: string
+    appId?: number | string
+    lastCreateTime?: string
+    storageType?: string
+    chatHistoryId?: number
+  }
+
+  type AppVersionQueryVO = {
+    id?: number
+    appId?: number
+    version?: number
+    storageType?: 'FULL' | 'DIFF'
+    message?: string
+  }
+
+  type AppVersionVO = {
+    id?: number
+    appId?: number
+    version?: number
+    content?: string
+    storageType?: 'FULL' | 'DIFF'
+    message?: string
+    createTime?: string
+    updateTime?: string
+  }
+
   type AppVO = {
     id?: number
     appName?: string
@@ -47,6 +88,18 @@ declare namespace API {
     createTime?: string
     updateTime?: string
     user?: UserVO
+  }
+
+  type BaseResponseAppVersionCompareVO = {
+    code?: number
+    data?: AppVersionCompareVO
+    message?: string
+  }
+
+  type BaseResponseAppVersionVO = {
+    code?: number
+    data?: AppVersionVO
+    message?: string
   }
 
   type BaseResponseAppVO = {
@@ -70,6 +123,12 @@ declare namespace API {
   type BaseResponseLong = {
     code?: number
     data?: number
+    message?: string
+  }
+
+  type BaseResponsePageAppVersionQueryVO = {
+    code?: number
+    data?: PageAppVersionQueryVO
     message?: string
   }
 
@@ -146,6 +205,10 @@ declare namespace API {
     appId: number
   }
 
+  type getAppVersionVOByIdParams = {
+    id: number | string
+  }
+
   type getAppVOByIdByAdminParams = {
     id: number
   }
@@ -177,6 +240,15 @@ declare namespace API {
     userRole?: string
     createTime?: string
     updateTime?: string
+  }
+
+  type PageAppVersionQueryVO = {
+    records?: AppVersionQueryVO[]
+    pageNumber?: number
+    pageSize?: number
+    totalPage?: number
+    totalRow?: number
+    optimizeCountQuery?: boolean
   }
 
   type PageAppVO = {

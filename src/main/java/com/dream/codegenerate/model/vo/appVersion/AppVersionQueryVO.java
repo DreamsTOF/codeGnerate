@@ -19,6 +19,10 @@ import java.io.Serializable;
 @Data
 @Builder
 public class AppVersionQueryVO  implements Serializable {
+    /**
+     * id
+     */
+    private Long id;
 
     /**
      * 应用id

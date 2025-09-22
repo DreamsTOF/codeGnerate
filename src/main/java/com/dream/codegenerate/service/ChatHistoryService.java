@@ -13,20 +13,20 @@ import java.time.LocalDateTime;
 /**
  * 对话历史 服务层。
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
+ *
  */
 public interface ChatHistoryService extends IService<ChatHistory> {
 
     /**
-     * 添加对话历史
+     * 添加对话消息
      *
-     * @param appId       应用 id
-     * @param message     消息
+     * @param appId       应用ID
+     * @param message     消息内容
      * @param messageType 消息类型
-     * @param userId      用户 id
-     * @return 是否成功
+     * @param userId      用户ID
+     * @return 新创建的对话历史ID
      */
-    boolean addChatMessage(Long appId, String message, String messageType, Long userId);
+    Long  addChatMessage(Long appId, String message, String messageType, Long userId);
 
     /**
      * 根据应用 id 删除对话历史

@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * 应用版本 服务层。
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
+ * dream
  */
 public interface AppVersionService extends IService<AppVersion> {
 

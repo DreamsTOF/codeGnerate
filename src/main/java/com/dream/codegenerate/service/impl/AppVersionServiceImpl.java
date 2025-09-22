@@ -29,7 +29,7 @@ import static com.mybatisflex.core.query.QueryMethods.ifNull;
 /**
  * 应用版本 服务层实现。
  *
- * @author <a href="https://github.com/liyupi">程序员鱼皮</a>
+ * dream
  */
 @Service
 public class AppVersionServiceImpl extends ServiceImpl<AppVersionMapper, AppVersion>  implements AppVersionService{

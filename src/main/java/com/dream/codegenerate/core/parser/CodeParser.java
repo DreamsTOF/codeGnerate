@@ -3,7 +3,7 @@ package com.dream.codegenerate.core.parser;
 /**
  * 代码解析器策略接口
  *
- * @author yupi
+ * @author dream
  */
 public interface CodeParser<T> {
 

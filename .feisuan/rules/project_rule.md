@@ -46,7 +46,7 @@ yu-ai-code-mother/
 ├── src/
 │   ├── main/
 │   │   ├── java/
-│   │   │   └── com/yupi/yuaicodemother/
+│   │   │   └── com/dream/yuaicodemother/
 │   │   │       ├── ai/
 │   │   │       │   ├── guardrail/
 │   │   │       │   ├── model/
@@ -104,7 +104,7 @@ yu-ai-code-mother/
 │   │       ├── prompt/
 │   │       └── static/
 │   └── test/
-│       └── java/com/yupi/yuaicodemother/
+│       └── java/com/dream/yuaicodemother/
 │           ├── ai/
 │           ├── core/
 │           ├── langgraph4j/
@@ -128,7 +128,7 @@ yu-ai-code-mother/
         └── utils/
 ```
 
-> ✅ 所有 Java 源码均位于 `src/main/java/com/yupi/yuaicodemother/` 下，前端源码位于 `yu-ai-code-mother-frontend/src`。
+> ✅ 所有 Java 源码均位于 `src/main/java/com/dream/yuaicodemother/` 下，前端源码位于 `yu-ai-code-mother-frontend/src`。
 
 ## 三、分层架构规范
 
