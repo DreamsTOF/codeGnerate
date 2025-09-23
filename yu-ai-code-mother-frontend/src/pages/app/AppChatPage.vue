@@ -201,6 +201,15 @@
           />
         </div>
       </div>
+
+      <!-- 右侧版本列表 -->
+      <div class="version-section">
+        <VersionSidebar
+          :app-id="appId"
+          @select-version="handleSelectVersion"
+          @restore-version="handleRestoreVersion"
+        />
+      </div>
     </div>
 
     <!-- 应用详情弹窗 -->
@@ -238,7 +247,8 @@ import request from '@/request';
 import MarkdownRenderer from '@/components/MarkdownRenderer.vue';
 import AppDetailModal from '@/components/AppDetailModal.vue';
 import DeploySuccessModal from '@/components/DeploySuccessModal.vue';
-import aiAvatar from '@/assets/aiAvatar.png';
+import VersionSidebar from './VersionSidebar.vue';
+import aiAvatar from '@/assets/aiAvatar.jpg';
 import { getStaticPreviewUrl } from '@/config/env';
 import { VisualEditor, type ElementInfo } from '@/utils/visualEditor';
 
@@ -255,7 +265,7 @@ import {
 } from '@ant-design/icons-vue';
 import { startChatStream, type ChatStreamCallbacks } from '@/utils/chatStreamHandler.ts';
 import {type ParsedEventData} from '@/utils/eventDataProcessor.ts';
-import { save } from '@/api/appVersionController';
+import { save, list, compare, restore } from '@/api/appVersionController';
 
 // 懒加载组件
 import PreviewDisplay from './PreviewDisplay.vue';
@@ -332,6 +342,21 @@ const appDetailVisible = ref(false);
 
 // 视图切换
 const activeView = ref<'preview' | 'code'>('preview');
+
+// 版本选择处理
+const handleSelectVersion = (version: any) => {
+  console.log('选择版本:', version);
+  // 可以在这里添加版本选择的逻辑
+};
+
+// 版本回滚处理
+const handleRestoreVersion = (version: any) => {
+  console.log('回滚版本:', version);
+  // 版本回滚成功后刷新应用信息
+  setTimeout(() => {
+    fetchAppInfo();
+  }, 1000);
+};
 
 
 // 显示应用详情
@@ -640,12 +665,11 @@ const saveCurrentVersion = async () => {
     const lastMessageWithId = [...messages.value].reverse().find(m => m.id);
     const lastChatHistoryId = lastMessageWithId ? lastMessageWithId.id : undefined;
 
-    const codeGenTypeForApi = appInfo.value.codeGenType.toUpperCase() as API.AppVersionSaveRequest['codeGenType'];
+    const codeGenTypeForApi = appInfo.value?.codeGenType?.toUpperCase() as API.AppVersionSaveRequest['codeGenType'];
     const params: API.AppVersionSaveRequest = {
       appId: appId.value as number,
       message: versionMessage,
       codeGenType: codeGenTypeForApi,
-      chatHistoryId: lastChatHistoryId,
     };
     const res = await save(params);
     if (res.data.code === 0) {
@@ -799,7 +823,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   padding: 16px;
-  background: #fdfdfd;
+  background: #f5f5f5;
 }
 
 /* 顶部栏 */
@@ -808,6 +832,10 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
+  background: white;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .header-left {
@@ -824,7 +852,7 @@ onUnmounted(() => {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: #1a1a1a;
+  color: #333;
 }
 
 .header-right {
@@ -891,7 +919,7 @@ onUnmounted(() => {
 }
 
 .ai-message .message-content {
-  background: #f5f5f5;
+  background: #1a1a1a;;
   color: #1a1a1a;
   padding: 8px 12px;
 }
@@ -907,7 +935,6 @@ onUnmounted(() => {
   color: #666;
 }
 
-
 /* 加载更多按钮 */
 .load-more-container {
   text-align: center;
@@ -919,10 +946,26 @@ onUnmounted(() => {
 .input-container {
   padding: 16px;
   background: white;
+  border-top: 1px solid #e0e0e0;
 }
 
 .input-wrapper {
   position: relative;
+}
+
+.input-wrapper .ant-input {
+  background: white;
+  border: 1px solid #d0d0d0;
+  color: #333;
+}
+
+.input-wrapper .ant-input:focus {
+  border-color: #1890ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+}
+
+.input-wrapper .ant-input::placeholder {
+  color: #999;
 }
 
 .input-wrapper .ant-input {
@@ -946,12 +989,25 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
+/* 右侧版本列表区域 */
+.version-section {
+  width: 320px;
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  min-height: 0;
+}
+
 .preview-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  border-bottom: 1px solid #e8e8e8;
+  border-bottom: 1px solid #e0e0e0;
+  background: #fafafa;
 }
 
 .preview-actions {
@@ -979,7 +1035,12 @@ onUnmounted(() => {
   .chat-section,
   .preview-section {
     flex: none;
-    height: 50vh;
+    height: 45vh;
+  }
+
+  .version-section {
+    width: 100%;
+    height: 200px;
   }
 }
 
