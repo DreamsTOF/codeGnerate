@@ -8,7 +8,6 @@ import com.dream.codegenerate.model.entity.AppVersion;
 import com.dream.codegenerate.model.entity.User;
 import com.dream.codegenerate.model.vo.appVersion.AppVersionCompareVO;
 import com.dream.codegenerate.model.vo.appVersion.AppVersionQueryVO;
-import com.dream.codegenerate.model.vo.appVersion.AppVersionRestoreVO;
 import com.dream.codegenerate.model.vo.appVersion.AppVersionVO;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -36,7 +35,7 @@ public interface AppVersionService extends IService<AppVersion> {
     /**
      * 恢复应用版本
      */
-    AppVersionRestoreVO restore(AppVersionRestoreRequest appVersionRestoreRequest, User loginUser);
+    Boolean restore(AppVersionRestoreRequest appVersionRestoreRequest, User loginUser);
 
     AppVersionVO getAppVersionVOById(long id, User loginUser);
 

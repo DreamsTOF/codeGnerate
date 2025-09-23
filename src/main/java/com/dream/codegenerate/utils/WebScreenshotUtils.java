@@ -16,8 +16,10 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.springframework.util.ResourceUtils;
 
 import java.io.File;
+import java.net.URL;
 import java.time.Duration;
 import java.util.UUID;
 
@@ -92,8 +94,20 @@ public class WebScreenshotUtils {
      */
     private static WebDriver initChromeDriver(int width, int height) {
         try {
-            // 自动管理 ChromeDriver
-            WebDriverManager.chromedriver().setup();
+            // 配置 WebDriverManager
+            // 1. 定义资源在 classpath 内的路径 (相对于 resources 目录)
+            String driverName;
+            if (System.getProperty("os.name").toLowerCase().contains("win")) {
+                driverName = "classpath:drivers/chromedriver.exe";
+            } else {
+                driverName = "classpath:drivers/chromedriver";
+            }
+
+            // 使用 Spring 的工具类直接从 classpath 获取文件
+            File driverFile = ResourceUtils.getFile(driverName);
+
+            // 设置属性
+            System.setProperty("webdriver.chrome.driver", driverFile.getAbsolutePath());
             // 配置 Chrome 选项
             ChromeOptions options = new ChromeOptions();
             // 无头模式

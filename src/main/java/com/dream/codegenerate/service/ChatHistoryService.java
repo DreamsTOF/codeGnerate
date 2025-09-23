@@ -66,4 +66,6 @@ public interface ChatHistoryService extends IService<ChatHistory> {
      * @return
      */
     QueryWrapper getQueryWrapper(ChatHistoryQueryRequest chatHistoryQueryRequest);
+
+    ChatHistory getLastHistory(Long appId);
 }

@@ -1,5 +1,7 @@
 package com.dream.codegenerate.constant;
 
+import java.util.Set;
+
 /**
  * 应用常量
  */
@@ -24,6 +26,8 @@ public interface AppConstant {
      * 应用部署目录
      */
     String CODE_DEPLOY_ROOT_DIR = System.getProperty("user.dir") + "/tmp/code_deploy";
+
+    Set<String> EXCLUDED_FOLDERS = Set.of("node_modules", ".git", "dist", "build");
 
     /**
      * 应用部署域名

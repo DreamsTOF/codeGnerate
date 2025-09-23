@@ -3,6 +3,8 @@ package com.dream.codegenerate.ai.tools;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.json.JSONObject;
 import com.dream.codegenerate.constant.AppConstant;
+import com.dream.codegenerate.core.context.SessionContext;
+import com.dream.codegenerate.model.enums.CodeGenTypeEnum;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolMemoryId;
@@ -30,12 +32,13 @@ public class FileWriteTool extends BaseTool {
             @P("要写入文件的内容")
             String content,
             @ToolMemoryId Long appId
+
     ) {
         try {
             Path path = Paths.get(relativeFilePath);
             if (!path.isAbsolute()) {
                 // 相对路径处理，创建基于 appId 的项目目录
-                String projectDirName = "vue_project_" + appId;
+                String projectDirName = getContext(appId).getCodeGenType().getValue()+"_" + appId;
                 Path projectRoot = Paths.get(AppConstant.CODE_OUTPUT_ROOT_DIR, projectDirName);
                 path = projectRoot.resolve(relativeFilePath);
             }

@@ -81,3 +81,6 @@ CREATE TABLE `app_version`
     INDEX `idx_appId` (`appId`),
     INDEX `idx_chatHistoryId` (`chatHistoryId`)
 ) COMMENT '应用版本' COLLATE = utf8mb4_unicode_ci;
+
+ALTER TABLE `app_version`
+    ADD COLUMN `cover` varchar(512) NULL COMMENT '版本封面截图URL' AFTER `message`;

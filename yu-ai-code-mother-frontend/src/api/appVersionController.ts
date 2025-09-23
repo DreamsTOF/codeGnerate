@@ -2,8 +2,8 @@
 /* eslint-disable */
 import request from '@/request'
 
-/** 对比两个应用的版本差异 POST /appVersion/compare */
-export async function compareAppVersions(
+/** 此处后端没有提供注释 POST /appVersion/compare */
+export async function compare(
   body: API.AppVersionCompareRequest,
   options?: { [key: string]: any }
 ) {
@@ -17,27 +17,67 @@ export async function compareAppVersions(
   })
 }
 
-/** 根据 id 获取版本详情 (包含代码内容) GET /appVersion/get/vo */
-export async function getAppVersionVoById(
+/** 此处后端没有提供注释 POST /appVersion/delete */
+export async function deleteById(body: API.DeleteRequest, options?: { [key: string]: any }) {
+  return request<API.BaseResponseBoolean>('/appVersion/delete', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}
+
+/** 此处后端没有提供注释 GET /appVersion/getInfo/${param0} */
+export async function getInfo(
   // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
-  params: API.getAppVersionVOByIdParams,
+  params: API.getInfoParams,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponseAppVersionVO>('/appVersion/get/vo', {
+  const { id: param0, ...queryParams } = params
+  return request<API.BaseResponseAppVersionVO>(`/appVersion/getInfo/${param0}`, {
+    method: 'GET',
+    params: { ...queryParams },
+    ...(options || {}),
+  })
+}
+
+/** 此处后端没有提供注释 GET /appVersion/list */
+export async function list(
+  // 叠加生成的Param类型 (非body参数swagger默认没有生成对象)
+  params: API.listParams,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponsePageAppVersionQueryVO>('/appVersion/list', {
     method: 'GET',
     params: {
       ...params,
+      appVersionQueryRequest: undefined,
+      ...params['appVersionQueryRequest'],
     },
     ...(options || {}),
   })
 }
 
-/** 分页获取版本列表 (不含代码内容) /appVersion/list/page */
-export async function listAppVersionByPage(
-  body: API.AppVersionQueryRequest,
+/** 此处后端没有提供注释 POST /appVersion/restore */
+export async function restore(
+  body: API.AppVersionRestoreRequest,
   options?: { [key: string]: any }
 ) {
-  return request<API.BaseResponsePageAppVersionQueryVO>('/appVersion/list/page', {
+  return request<API.BaseResponseBoolean>('/appVersion/restore', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}
+
+/** 此处后端没有提供注释 POST /appVersion/save */
+export async function save(body: API.AppVersionSaveRequest, options?: { [key: string]: any }) {
+  return request<API.BaseResponseLong>('/appVersion/save', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

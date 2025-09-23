@@ -67,10 +67,10 @@ public class AppController {
         // 获取当前登录用户
         User loginUser = userService.getLoginUser(request);
         // 调用服务生成代码（SSE 流式返回）
-        Flux<String> contentFlux = appService.chatToGenCode(appId, message, loginUser);
+        Flux<ServerSentEvent<String>> contentFlux = appService.chatToGenCode(appId, message, loginUser);
         return contentFlux
-                .map(chunk -> {
-                    Map<String, String> wrapper = Map.of("d", chunk);
+                .map(event -> {
+                    Map<String, String> wrapper = Map.of("d", event.data());
                     String jsonData = JSONUtil.toJsonStr(wrapper);
                     return ServerSentEvent.<String>builder()
                             .data(jsonData)

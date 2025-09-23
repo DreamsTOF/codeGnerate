@@ -1,9 +1,6 @@
 /**
  * 环境变量配置
- */
-import {CodeGenTypeEnum} from "@/utils/codeGenTypes.ts";
-
-// 应用部署域名
+ */// 应用部署域名
 export const DEPLOY_DOMAIN = import.meta.env.VITE_DEPLOY_DOMAIN || 'http://localhost'
 
 // API 基础地址
@@ -26,3 +23,6 @@ export const getStaticPreviewUrl = (codeGenType: string, appId: string) => {
   }
   return baseUrl
 }
+
+import {CodeGenTypeEnum} from "@/utils/codeGenTypes.ts";
+

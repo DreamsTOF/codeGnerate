@@ -18,7 +18,7 @@ public class AppVersionRestoreRequest implements Serializable {
     private Long appId;
 
     /**
-     * 版本号
+     * 应用id
      */
-    private Integer version;
+    private Long id;
 }

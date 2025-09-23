@@ -5,9 +5,7 @@ import com.dream.codegenerate.model.dto.appVersion.AppVersionCompareRequest;
 import com.dream.codegenerate.model.dto.appVersion.AppVersionRestoreRequest;
 import com.dream.codegenerate.model.dto.appVersion.AppVersionSaveRequest;
 import com.dream.codegenerate.model.vo.appVersion.AppVersionCompareVO;
-import com.dream.codegenerate.model.vo.appVersion.AppVersionRestoreVO;
 import com.dream.codegenerate.model.vo.appVersion.AppVersionVO;
-import com.github.xiaoymin.knife4j.annotations.ApiOperationSupport;
 import com.mybatisflex.core.paginate.Page;
 import com.dream.codegenerate.common.BaseResponse;
 import com.dream.codegenerate.common.ResultUtils;
@@ -24,7 +22,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.beans.factory.annotation.Autowired;
-import com.dream.codegenerate.model.entity.AppVersion;
 import com.dream.codegenerate.service.AppVersionService;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -89,7 +86,7 @@ public class AppVersionController {
      */
     @PostMapping("/restore")
     @ApiOperation("恢复应用版本")
-    public BaseResponse<AppVersionRestoreVO> restore(@RequestBody AppVersionRestoreRequest appVersionRestoreRequest,
+    public BaseResponse<Boolean> restore(@RequestBody AppVersionRestoreRequest appVersionRestoreRequest,
                                                      HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
         return ResultUtils.success(appVersionService.restore(appVersionRestoreRequest, loginUser));
@@ -113,7 +110,7 @@ public class AppVersionController {
 
     @PostMapping("/delete")
     @ApiOperation("删除应用版本")
-    public BaseResponse<Boolean> delete(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
+    public BaseResponse<Boolean> deleteById(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
         return ResultUtils.success(appVersionService.deleteByAppId(deleteRequest.getId(), loginUser));
     }

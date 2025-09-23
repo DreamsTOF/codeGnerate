@@ -33,6 +33,11 @@ public class AppVersionVO {
     private Integer version;
 
     /**
+     * 应用封面
+     */
+    private String cover;
+
+    /**
      * 存储内容（全量代码或差异 patch）
      */
     private String content;

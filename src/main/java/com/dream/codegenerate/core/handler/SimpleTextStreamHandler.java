@@ -4,6 +4,7 @@ import com.dream.codegenerate.model.entity.User;
 import com.dream.codegenerate.model.enums.ChatHistoryMessageTypeEnum;
 import com.dream.codegenerate.service.ChatHistoryService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 
 /**
@@ -24,15 +25,15 @@ public class SimpleTextStreamHandler {
      * @param loginUser          登录用户
      * @return 处理后的流
      */
-    public Flux<String> handle(Flux<String> originFlux,
-                               ChatHistoryService chatHistoryService,
-                               long appId, User loginUser) {
+    public Flux<ServerSentEvent<String>> handle(Flux<ServerSentEvent<String>> originFlux,
+                                          ChatHistoryService chatHistoryService,
+                                          long appId, User loginUser) {
         StringBuilder aiResponseBuilder = new StringBuilder();
         return originFlux
-                .map(chunk -> {
+                .map(event -> {
                     // 收集AI响应内容
-                    aiResponseBuilder.append(chunk);
-                    return chunk;
+                    aiResponseBuilder.append(event.data());
+                    return event;
                 })
                 .doOnComplete(() -> {
                     // 流式响应完成后，添加AI消息到对话历史

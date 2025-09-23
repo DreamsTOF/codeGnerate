@@ -165,4 +165,14 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
         }
         return queryWrapper;
     }
+
+
+    @Override
+    public ChatHistory getLastHistory(Long appId) {
+        QueryWrapper queryWrapper = QueryWrapper.create()
+                .eq("appId", appId)
+                .orderBy("createTime", false)
+                .limit(1);
+        return this.getOne(queryWrapper);
+    }
 }

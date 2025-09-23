@@ -10,6 +10,7 @@ import dev.langchain4j.data.message.UserMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.bsc.langgraph4j.action.AsyncNodeAction;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
+import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -36,7 +37,7 @@ public class CodeGeneratorNode {
             Long appId = 0L;
             // 调用流式代码生成
             UserMessage message = new UserMessage(userMessage);
-            Flux<String> codeStream = codeGeneratorFacade.generateAndSaveCodeStream(message, generationType, appId);
+            Flux<ServerSentEvent<String>> codeStream = codeGeneratorFacade.generateAndSaveCodeStream(message, generationType, appId);
             // 同步等待流式输出完成
             codeStream.blockLast(Duration.ofMinutes(10)); // 最多等待 10 分钟
             // 根据类型设置生成目录

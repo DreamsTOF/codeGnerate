@@ -19,8 +19,12 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.ResourceUtils;
 
+import java.io.File;
+import java.nio.file.Files;
 import java.time.Duration;
+import java.util.HashMap;
 
 /**
  * AI 服务创建工厂
@@ -73,11 +77,14 @@ public class AiCodeGeneratorServiceFactory {
      * @param appId       应用 id
      * @param codeGenType 生成类型
      * @return
+     * @deprecated 请使用 getUnifiedAiCodeGeneratorService 方法替代。
+     * 此方法保留是为了向后兼容，它使用的是旧的、非统一的 AI 服务创建逻辑。
      */
-    public AiCodeGeneratorService getAiCodeGeneratorService(long appId, CodeGenTypeEnum codeGenType) {
-        String cacheKey = buildCacheKey(appId, codeGenType);
-        return serviceCache.get(cacheKey, key -> createAiCodeGeneratorService(appId, codeGenType));
-    }
+//    @Deprecated
+//    public AiCodeGeneratorService getAiCodeGeneratorService(long appId, CodeGenTypeEnum codeGenType) {
+//        String cacheKey = buildCacheKey(appId, codeGenType);
+//        return serviceCache.get(cacheKey, key -> createAiCodeGeneratorService(appId, codeGenType));
+//    }
 
     /**
      * 创建新的 AI 服务实例
@@ -85,7 +92,10 @@ public class AiCodeGeneratorServiceFactory {
      * @param appId       应用 id
      * @param codeGenType 生成类型
      * @return
+     * @deprecated 旧的服务创建逻辑，仅为兼容保留。
+     * 新逻辑请参见 createUnifiedAiService 方法。
      */
+    @Deprecated
     private AiCodeGeneratorService createAiCodeGeneratorService(long appId, CodeGenTypeEnum codeGenType) {
         log.info("为 appId: {} 创建新的 AI 服务实例", appId);
         // 根据 appId 构建独立的对话记忆
@@ -112,7 +122,7 @@ public class AiCodeGeneratorServiceFactory {
                                 ToolExecutionResultMessage.from(toolExecutionRequest,
                                         "Error: there is no tool called " + toolExecutionRequest.name())
                         )
-                        .maxSequentialToolsInvocations(50)  // 最多连续调用 20 次工具
+                        .maxSequentialToolsInvocations(50)  // 最多连续调用 50 次工具
                         .inputGuardrails(new PromptSafetyInputGuardrail()) // 添加输入护轨
 //                        .outputGuardrails(new RetryOutputGuardrail()) // 添加输出护轨，为了流式输出，这里不使用
                         .build();
@@ -125,6 +135,12 @@ public class AiCodeGeneratorServiceFactory {
                         .chatModel(chatModel)
                         .streamingChatModel(openAiStreamingChatModel)
                         .chatMemory(chatMemory)
+                        .tools(toolManager.getAllTools())
+                        // 处理工具调用幻觉问题
+                        .hallucinatedToolNameStrategy(toolExecutionRequest ->
+                                ToolExecutionResultMessage.from(toolExecutionRequest,
+                                        "Error: there is no tool called " + toolExecutionRequest.name())
+                        )
                         .inputGuardrails(new PromptSafetyInputGuardrail()) // 添加输入护轨
 //                        .outputGuardrails(new RetryOutputGuardrail()) // 添加输出护轨，为了流式输出，这里不使用
                         .build();
@@ -132,6 +148,86 @@ public class AiCodeGeneratorServiceFactory {
             default ->
                     throw new BusinessException(ErrorCode.SYSTEM_ERROR, "不支持的代码生成类型: " + codeGenType.getValue());
         };
+    }
+    /**
+     * 【推荐】根据 appId 和生成类型获取 AI 服务
+     * 此方法会根据任务复杂度选择合适的模型，以优化成本。
+     *
+     * @param appId       应用 id
+     * @param codeGenType 生成类型
+     * @return 统一的 AiCodeGeneratorService 实例
+     */
+    public AiCodeGeneratorService getAiCodeGeneratorService(long appId, CodeGenTypeEnum codeGenType) {
+        String cacheKey = buildCacheKey(appId, codeGenType);
+        return serviceCache.get(cacheKey, key -> createAiService(appId, codeGenType));
+    }
+
+    /**
+     * 创建 AI 服务实例的核心方法
+     *
+     * @param appId       应用 id
+     * @param codeGenType 生成类型
+     * @return AiCodeGeneratorService 实例
+     */
+    private AiCodeGeneratorService createAiService(long appId, CodeGenTypeEnum codeGenType) {
+        log.info("为 appId: {} 和类型: {} 创建 AI 服务实例", appId, codeGenType.getValue());
+
+        // 1. 通用的内存管理
+        MessageWindowChatMemory chatMemory = MessageWindowChatMemory
+                .builder()
+                .id(appId)
+                .chatMemoryStore(redisChatMemoryStore)
+                .maxMessages(100)
+                .build();
+        chatHistoryService.loadChatHistoryToMemory(appId, chatMemory, 100);
+
+        // 2. 根据任务类型选择不同的模型和 Prompt
+        StreamingChatModel selectedModel;
+        String promptResourcePath;
+
+        switch (codeGenType) {
+            case VUE_PROJECT:
+                log.info("任务类型: {}, 选择【高级推理模型】", codeGenType.getValue());
+                selectedModel = SpringContextUtil.getBean("reasoningStreamingChatModelPrototype", StreamingChatModel.class);
+                promptResourcePath = "prompt/codegen-vue-project-system-prompt.txt";
+                break;
+
+            case HTML:
+            case MULTI_FILE:
+                log.info("任务类型: {}, 选择【标准基础模型】", codeGenType.getValue());
+                selectedModel = SpringContextUtil.getBean("streamingChatModelPrototype", StreamingChatModel.class);
+                promptResourcePath = (codeGenType == CodeGenTypeEnum.HTML)
+                        ? "prompt/codegen-html-system-prompt.txt"
+                        : "prompt/codegen-multi-file-system-prompt.txt";
+                break;
+
+            default:
+                throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的代码生成类型");
+        }
+
+        // 3. 加载 System Prompt 内容
+        final String systemPromptContent;
+        try {
+            File file = ResourceUtils.getFile("classpath:" + promptResourcePath);
+            systemPromptContent = Files.readString(file.toPath());
+        } catch (Exception e) {
+            log.error("加载 System Prompt 文件失败: {}", promptResourcePath, e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "加载AI配置失败");
+        }
+
+        // 4. 构建统一的 AI 服务
+        return AiServices.builder(AiCodeGeneratorService.class)
+                .streamingChatModel(selectedModel) // <--- 使用动态选择的模型
+                .chatMemoryProvider(memoryId -> chatMemory)
+                .tools(toolManager.getAllTools())
+                .systemMessageProvider(chat -> systemPromptContent) // <--- 提供加载好的 Prompt 内容
+                .hallucinatedToolNameStrategy(toolExecutionRequest ->
+                        ToolExecutionResultMessage.from(toolExecutionRequest,
+                                "Error: there is no tool called " + toolExecutionRequest.name())
+                )
+                .maxSequentialToolsInvocations(50)
+                .inputGuardrails(new PromptSafetyInputGuardrail())
+                .build();
     }
 
     /**

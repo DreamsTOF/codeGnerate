@@ -31,6 +31,11 @@ public class AppVersionTableDef extends TableDef {
     public final QueryColumn VERSION = new QueryColumn(this, "version");
 
     /**
+     * 封面图片url
+     */
+    public final QueryColumn COVER = new QueryColumn(this, "cover");
+
+    /**
      * 存储内容（全量代码或差异 patch）
      */
     public final QueryColumn CONTENT = new QueryColumn(this, "content");

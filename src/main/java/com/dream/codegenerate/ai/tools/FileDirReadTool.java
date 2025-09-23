@@ -48,7 +48,8 @@ public class FileDirReadTool extends BaseTool {
         try {
             Path path = Paths.get(relativeDirPath == null ? "" : relativeDirPath);
             if (!path.isAbsolute()) {
-                String projectDirName = "vue_project_" + appId;
+                // 相对路径处理，创建基于 appId 的项目目录
+                String projectDirName = getContext(appId).getCodeGenType().getValue()+"_" + appId;
                 Path projectRoot = Paths.get(AppConstant.CODE_OUTPUT_ROOT_DIR, projectDirName);
                 path = projectRoot.resolve(relativeDirPath == null ? "" : relativeDirPath);
             }

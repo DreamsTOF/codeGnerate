@@ -45,6 +45,11 @@ public class AppVersion implements Serializable {
     private Long appId;
 
     /**
+     * 应用封面
+     */
+    private String cover;
+
+    /**
      * 版本号，例如 1, 2, 3...
      */
     private Integer version;

@@ -163,9 +163,9 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { message } from 'ant-design-vue'
 import {
-  listAppVersionByPage,
-  getAppVersionVoById,
-  compareAppVersions
+  list,
+  getInfo,
+  compare
 } from '@/api/appVersionController'
 import { formatTime } from '@/utils/time'
 import { calculateDiff } from '@/utils/diffUtils'
@@ -283,7 +283,7 @@ const getLineClass = (version: 'from' | 'to', lineIndex: number) => {
 const loadVersionList = async () => {
   loading.value = true
   try {
-    const res = await listAppVersionByPage({
+    const res = await list({
       pageNum: pagination.value.current,
       pageSize: pagination.value.pageSize,
       appId: String(appId.value)
@@ -306,7 +306,7 @@ const loadVersionList = async () => {
 // 查看版本详情
 const handleViewVersion = async (version: API.AppVersionQueryVO) => {
   try {
-    const res = await getAppVersionVoById({
+    const res = await getInfo({
       id: String(version.id!)
     })
 
@@ -353,7 +353,7 @@ const handleCompareVersions = async () => {
   const [fromId, toId] = selectedIds
 
   try {
-    const res = await compareAppVersions({
+    const res = await compare({
       appId: String(appId.value),
       fromVersion: Number(fromId),
       toVersion: Number(toId)

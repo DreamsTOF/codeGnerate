@@ -15,6 +15,7 @@ import org.bsc.langgraph4j.NodeOutput;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
 import org.bsc.langgraph4j.prebuilt.MessagesStateGraph;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 
 import java.io.IOException;
@@ -102,7 +103,7 @@ public class CodeGenWorkflow {
     /**
      * 执行工作流（Flux 流式输出版本）
      */
-    public Flux<String> executeWorkflowWithFlux(String originalPrompt) {
+    public Flux<ServerSentEvent<String>> executeWorkflowWithFlux(String originalPrompt) {
         return Flux.create(sink -> {
             Thread.startVirtualThread(() -> {
                 try {
@@ -111,10 +112,10 @@ public class CodeGenWorkflow {
                             .originalPrompt(originalPrompt)
                             .currentStep("初始化")
                             .build();
-                    sink.next(formatSseEvent("workflow_start", Map.of(
+                    sink.next(ServerSentEvent.builder(formatSseEvent("workflow_start", Map.of(
                             "message", "开始执行代码生成工作流",
                             "originalPrompt", originalPrompt
-                    )));
+                    ))).build());
                     GraphRepresentation graph = workflow.getGraph(GraphRepresentation.Type.MERMAID);
                     log.info("工作流图:\n{}", graph.content());
 
@@ -124,25 +125,25 @@ public class CodeGenWorkflow {
                         log.info("--- 第 {} 步完成 ---", stepCounter);
                         WorkflowContext currentContext = WorkflowContext.getContext(step.state());
                         if (currentContext != null) {
-                            sink.next(formatSseEvent("step_completed", Map.of(
+                            sink.next(ServerSentEvent.builder(formatSseEvent("step_completed", Map.of(
                                     "stepNumber", stepCounter,
                                     "currentStep", currentContext.getCurrentStep()
-                            )));
+                            ))).build());
                             log.info("当前步骤上下文: {}", currentContext);
                         }
                         stepCounter++;
                     }
-                    sink.next(formatSseEvent("workflow_completed", Map.of(
+                    sink.next(ServerSentEvent.builder(formatSseEvent("workflow_completed", Map.of(
                             "message", "代码生成工作流执行完成！"
-                    )));
+                    ))).build());
                     log.info("代码生成工作流执行完成！");
                     sink.complete();
                 } catch (Exception e) {
                     log.error("工作流执行失败: {}", e.getMessage(), e);
-                    sink.next(formatSseEvent("workflow_error", Map.of(
+                    sink.next(ServerSentEvent.builder(formatSseEvent("workflow_error", Map.of(
                             "error", e.getMessage(),
                             "message", "工作流执行失败"
-                    )));
+                    ))).build());
                     sink.error(e);
                 }
             });

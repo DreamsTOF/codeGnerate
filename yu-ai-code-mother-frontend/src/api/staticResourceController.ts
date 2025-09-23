@@ -15,3 +15,18 @@ export async function serveStaticResource(
     ...(options || {}),
   })
 }
+
+/** 此处后端没有提供注释 POST /static/list */
+export async function listStaticFiles(
+  body: API.StaticFilesListRequest,
+  options?: { [key: string]: any }
+) {
+  return request<API.BaseResponseListString>('/static/list', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    data: body,
+    ...(options || {}),
+  })
+}

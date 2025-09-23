@@ -35,7 +35,7 @@ declare namespace API {
   }
 
   type AppVersionCompareRequest = {
-    appId?: number | string
+    appId?: number
     fromVersion?: number
     toVersion?: number
   }
@@ -50,7 +50,7 @@ declare namespace API {
     pageSize?: number
     sortField?: string
     sortOrder?: string
-    appId?: number | string
+    appId?: number
     lastCreateTime?: string
     storageType?: string
     chatHistoryId?: number
@@ -59,18 +59,32 @@ declare namespace API {
   type AppVersionQueryVO = {
     id?: number
     appId?: number
+    cover?: string
     version?: number
     storageType?: 'FULL' | 'DIFF'
     message?: string
+  }
+
+  type AppVersionRestoreRequest = {
+    appId?: number
+    id?: number
+  }
+
+  type AppVersionSaveRequest = {
+    appId?: number
+    message?: string
+    codeGenType?: 'HTML' | 'MULTI_FILE' | 'VUE_PROJECT'
   }
 
   type AppVersionVO = {
     id?: number
     appId?: number
     version?: number
+    cover?: string
     content?: string
     storageType?: 'FULL' | 'DIFF'
     message?: string
+    chatHistoryId?: number
     createTime?: string
     updateTime?: string
   }
@@ -111,6 +125,12 @@ declare namespace API {
   type BaseResponseBoolean = {
     code?: number
     data?: boolean
+    message?: string
+  }
+
+  type BaseResponseListString = {
+    code?: number
+    data?: string[]
     message?: string
   }
 
@@ -205,15 +225,15 @@ declare namespace API {
     appId: number
   }
 
-  type getAppVersionVOByIdParams = {
-    id: number | string
-  }
-
   type getAppVOByIdByAdminParams = {
     id: number
   }
 
   type getAppVOByIdParams = {
+    id: number
+  }
+
+  type getInfoParams = {
     id: number
   }
 
@@ -229,6 +249,10 @@ declare namespace API {
     appId: number
     pageSize?: number
     lastCreateTime?: string
+  }
+
+  type listParams = {
+    appVersionQueryRequest: AppVersionQueryRequest
   }
 
   type LoginUserVO = {
@@ -282,6 +306,11 @@ declare namespace API {
 
   type serveStaticResourceParams = {
     deployKey: string
+  }
+
+  type StaticFilesListRequest = {
+    codeGenType?: 'HTML' | 'MULTI_FILE' | 'VUE_PROJECT'
+    appId?: number
   }
 
   type User = {

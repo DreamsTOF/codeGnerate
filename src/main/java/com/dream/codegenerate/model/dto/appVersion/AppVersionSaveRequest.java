@@ -1,7 +1,9 @@
 package com.dream.codegenerate.model.dto.appVersion;
 
 import com.dream.codegenerate.model.enums.AppVersionStoreTypeEnum;
+import com.dream.codegenerate.model.enums.CodeGenTypeEnum;
 import lombok.Data;
+import org.aspectj.apache.bcel.classfile.Code;
 
 import java.io.Serializable;
 
@@ -19,22 +21,12 @@ public class AppVersionSaveRequest implements Serializable {
     private Long appId;
 
     /**
-     * 代码内容（JSON格式）
-     */
-    private String content;
-
-    /**
-     * 存储类型 (full, diff)
-     */
-    private AppVersionStoreTypeEnum storageType;
-
-    /**
      * 版本说明，类似于 git commit message
      */
     private String message;
 
     /**
-     * 关联的对话id，用于追溯版本来源
+     * 应用版本存储类型
      */
-    private Long chatHistoryId;
+    private CodeGenTypeEnum codeGenType;
 }

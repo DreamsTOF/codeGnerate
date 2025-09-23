@@ -7,6 +7,7 @@ import com.dream.codegenerate.model.dto.app.AppQueryRequest;
 import com.dream.codegenerate.model.entity.App;
 import com.dream.codegenerate.model.entity.User;
 import com.dream.codegenerate.model.vo.AppVO;
+import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
@@ -26,7 +27,7 @@ public interface AppService extends IService<App> {
      * @param loginUser 登录用户
      * @return
      */
-    Flux<String> chatToGenCode(Long appId, String message, User loginUser);
+    Flux<ServerSentEvent<String>> chatToGenCode(Long appId, String message, User loginUser);
 
     /**
      * 创建应用
