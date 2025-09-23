@@ -56,7 +56,7 @@ public class AppVersionController {
      *
      * @return 所有数据
      */
-    @GetMapping("list")
+    @PostMapping("list")
     @ApiOperation("查询应用的所有版本")
     public BaseResponse<Page<AppVersionQueryVO>> list(@RequestBody AppVersionQueryRequest appVersionQueryRequest,
                                                 HttpServletRequest request) {

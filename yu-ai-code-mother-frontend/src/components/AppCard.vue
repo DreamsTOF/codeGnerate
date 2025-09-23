@@ -2,14 +2,11 @@
   <div class="app-card" :class="{ 'app-card--featured': featured }">
     <div class="app-preview">
       <img v-if="app.cover" :src="app.cover" :alt="app.appName" />
-      <div v-else class="app-placeholder">
-        <span>🤖</span>
-      </div>
+      <img v-else :src="defaultCover" :alt="app.appName" class="default-cover" />
       <div class="app-overlay">
         <a-space direction="vertical" size="small">
           <a-button type="primary" @click="handleViewChat">查看对话</a-button>
           <a-button v-if="app.deployKey" type="default" @click="handleViewWork">查看作品</a-button>
-          <a-button type="default" @click="handleViewVersions">版本管理</a-button>
         </a-space>
       </div>
     </div>
@@ -30,6 +27,8 @@
 </template>
 
 <script setup lang="ts">
+import defaultCoverImage from '@/assets/default-app-cover.svg'
+
 interface Props {
   app: API.AppVO
   featured?: boolean
@@ -45,6 +44,8 @@ const props = withDefaults(defineProps<Props>(), {
   featured: false,
 })
 
+const defaultCover = defaultCoverImage
+
 const emit = defineEmits<Emits>()
 
 const handleViewChat = () => {
@@ -55,33 +56,27 @@ const handleViewWork = () => {
   emit('view-work', props.app)
 }
 
-const handleViewVersions = () => {
-  emit('view-versions', props.app.id)
-}
 </script>
 
 <style scoped>
 .app-card {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 16px;
+  background: #ffffff;
+  border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition:
-    transform 0.3s,
-    box-shadow 0.3s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e8ecef;
+  transition: all 0.2s ease;
   cursor: pointer;
 }
 
 .app-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .app-preview {
   height: 180px;
-  background: #f5f5f5;
+  background: #f8f9fa;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -93,11 +88,16 @@ const handleViewVersions = () => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.2s ease;
 }
 
-.app-placeholder {
-  font-size: 48px;
-  color: #d9d9d9;
+.app-preview img:hover {
+  transform: scale(1.05);
+}
+
+.default-cover {
+  padding: 20px;
+  background: linear-gradient(135deg, #1890ff08, #40a9ff12);
 }
 
 .app-overlay {
@@ -106,12 +106,12 @@ const handleViewVersions = () => {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
   opacity: 0;
-  transition: opacity 0.3s;
+  transition: opacity 0.2s ease;
 }
 
 .app-card:hover .app-overlay {
@@ -123,6 +123,7 @@ const handleViewVersions = () => {
   display: flex;
   align-items: center;
   gap: 12px;
+  background: #ffffff;
 }
 
 .app-info-left {
@@ -138,18 +139,66 @@ const handleViewVersions = () => {
   font-size: 16px;
   font-weight: 600;
   margin: 0 0 4px;
-  color: #1a1a1a;
+  color: #2c3e50;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: -0.3px;
+}
+
+.app-author {
+  font-size: 14px;
+  color: #7f8c8d;
+  margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.app-author {
-  font-size: 14px;
-  color: #666;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+/* 按钮样式 */
+:deep(.ant-btn) {
+  border-radius: 6px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+:deep(.ant-btn-primary) {
+  background: #1890ff;
+  border: none;
+  box-shadow: 0 2px 4px rgba(24, 144, 255, 0.2);
+}
+
+:deep(.ant-btn-primary:hover) {
+  background: #40a9ff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(24, 144, 255, 0.3);
+}
+
+:deep(.ant-btn-default) {
+  background: #ffffff;
+  border: 1px solid #e8ecef;
+  color: #2c3e50;
+}
+
+:deep(.ant-btn-default:hover) {
+  border-color: #1890ff;
+  color: #1890ff;
+  background: #f8f9fa;
+}
+
+/* 头像样式 */
+:deep(.ant-avatar) {
+  border: 1px solid #e8ecef;
+  background: #f8f9fa;
+}
+
+/* 特色卡片样式 */
+.app-card--featured {
+  box-shadow: 0 4px 16px rgba(24, 144, 255, 0.15);
+  border-color: #1890ff;
+}
+
+.app-card--featured:hover {
+  box-shadow: 0 6px 20px rgba(24, 144, 255, 0.25);
 }
 </style>

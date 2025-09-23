@@ -96,19 +96,23 @@ public class AppVersion implements Serializable {
 
     public static AppVersionQueryVO toAppVersionQueryVO(AppVersion appVersion){
         return AppVersionQueryVO.builder()
+                .id(appVersion.getId())
                 .appId(appVersion.getAppId())
                 .version(appVersion.getVersion())
+                .cover(appVersion.getCover())
                 .storageType(appVersion.getStorageType())
                 .message(appVersion.getMessage())
                 .build();
     }
     public static AppVersionVO toAppVersionVO(AppVersion appVersion){
         return AppVersionVO.builder()
+                .id(appVersion.getId())
                 .appId(appVersion.getAppId())
                 .version(appVersion.getVersion())
                 .content(appVersion.getContent())
                 .storageType(appVersion.getStorageType())
                 .message(appVersion.getMessage())
+                .cover(appVersion.getCover())
                 .createTime(appVersion.getCreateTime())
                 .updateTime(appVersion.getUpdateTime())
                 .build();

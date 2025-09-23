@@ -154,8 +154,8 @@ const handleRegisterSubmit = async () => {
   align-items: center;
   font-family: "Montserrat", sans-serif;
   font-size: 12px;
-  background-color: #f0f2f5; /* 页面的中性背景色 */
-  color: #a0a5a8;
+  background: #f0f2f5;
+  color: #262626;
 }
 
 .main-box {
@@ -164,9 +164,10 @@ const handleRegisterSubmit = async () => {
   min-width: 1000px;
   min-height: 600px;
   height: 600px;
-  background-color: #fff;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border-radius: 12px;
+  border: 1px solid #e8e8e8;
   overflow: hidden;
 
   .container {
@@ -178,7 +179,7 @@ const handleRegisterSubmit = async () => {
     width: 500px;
     height: 100%;
     padding: 25px;
-    background: linear-gradient(135deg, #e6e9ff 0%, #f0f3ff 100%);
+    background: #fafafa;
     transition: all 1.25s;
 
     form {
@@ -193,25 +194,25 @@ const handleRegisterSubmit = async () => {
         font-size: 34px;
         font-weight: 700;
         line-height: 2;
-        color: #7b68ee; /* 紫色调 */
+        color: #1890ff;
         margin-bottom: 10px;
       }
 
       .subtitle {
         font-size: 14px;
-        color: #8a91b4;
+        color: #595959;
         margin-bottom: 30px;
       }
 
       .tips {
-        color: #8a91b4;
+        color: #595959;
         text-align: right;
         font-size: 13px;
         margin: 8px 0 16px;
         width: 350px;
 
         a {
-          color: #7b68ee;
+          color: #1890ff;
           cursor: pointer;
           font-weight: bold;
 
@@ -231,15 +232,15 @@ const handleRegisterSubmit = async () => {
         border: none;
         outline: none;
         background-color: transparent;
-        border-bottom: 2px solid #dcdce5;
+        border-bottom: 2px solid #d9d9d9;
         transition: 0.25s ease;
 
         &::placeholder {
-          color: #a0a5a8;
+          color: #8c8c8c;
         }
 
         &:focus {
-          border-bottom-color: #7b68ee;
+          border-bottom-color: #1890ff;
         }
       }
     }
@@ -293,7 +294,7 @@ const handleRegisterSubmit = async () => {
     padding: 50px;
     z-index: 300;
     transition: 1.25s;
-    background-image: url("@/assets/images/background.jpg");
+    background: linear-gradient(135deg, #1890ff, #40a9ff);
     background-size: cover;
     background-position: center;
     overflow: hidden;
@@ -309,14 +310,13 @@ const handleRegisterSubmit = async () => {
       height: 100%;
       padding: 50px 55px;
       transition: 1.25s;
-      background-color: rgba(0, 0, 0, 0.3); /* 深色叠加层以提高文本可读性 */
+      background-color: rgba(0, 0, 0, 0.1);
 
       h2 {
         font-size: 34px;
         font-weight: 700;
         line-height: 3;
         color: #fff;
-        text-shadow: 0 2px 4px rgba(0,0,0,0.5);
       }
 
       p {
@@ -324,7 +324,6 @@ const handleRegisterSubmit = async () => {
         letter-spacing: 0.25px;
         text-align: center;
         line-height: 1.6;
-        text-shadow: 0 1px 3px rgba(0,0,0,0.5);
       }
     }
   }
@@ -344,16 +343,16 @@ const handleRegisterSubmit = async () => {
     font-size: 15px;
     font-weight: bold;
     letter-spacing: 2px;
-    background: linear-gradient(to right, #8971ea, #7b68ee, #6a82fb);
+    background: linear-gradient(135deg, #1890ff, #40a9ff);
     color: #f9f9f9;
     cursor: pointer;
     border: none;
-    box-shadow: 0 4px 15px rgba(123, 104, 238, 0.4);
+    box-shadow: 0 4px 15px rgba(24, 144, 255, 0.3);
     transition: all 0.3s ease;
 
     &:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(123, 104, 238, 0.6);
+      box-shadow: 0 6px 20px rgba(24, 144, 255, 0.4);
     }
   }
 }

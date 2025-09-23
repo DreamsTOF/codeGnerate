@@ -251,10 +251,6 @@ declare namespace API {
     lastCreateTime?: string
   }
 
-  type listParams = {
-    appVersionQueryRequest: AppVersionQueryRequest
-  }
-
   type LoginUserVO = {
     id?: number
     userAccount?: string
@@ -311,6 +307,10 @@ declare namespace API {
   type StaticFilesListRequest = {
     codeGenType?: 'HTML' | 'MULTI_FILE' | 'VUE_PROJECT'
     appId?: number
+  }
+
+  type updateMyAvatarParams = {
+    id: number
   }
 
   type User = {

@@ -279,6 +279,7 @@ onMounted(() => {
   padding: 24px;
   max-width: 1000px;
   margin: 0 auto;
+  background: #f0f2f5;
 }
 
 .page-header {
@@ -292,32 +293,90 @@ onMounted(() => {
   margin: 0;
   font-size: 24px;
   font-weight: 600;
+  color: #262626;
 }
 
 .edit-container {
-  border-radius: 8px;
+  border-radius: 12px;
+}
+
+.edit-container .ant-card {
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
 }
 
 .cover-preview {
   margin-top: 12px;
   padding: 12px;
-  border: 1px solid #e8e8e8;
+  border: 1px solid #f0f0f0;
   border-radius: 6px;
   background: #fafafa;
 }
 
 .form-tip {
   font-size: 12px;
-  color: #999;
+  color: #8c8c8c;
   margin-top: 4px;
 }
 
 :deep(.ant-card-head) {
   background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+:deep(.ant-card-head-title) {
+  color: #262626;
+}
+
+:deep(.ant-card-body) {
+  color: #262626;
+}
+
+:deep(.ant-form-item-label > label) {
+  color: #595959;
+}
+
+:deep(.ant-input),
+:deep(.ant-input-number),
+:deep(.ant-textarea) {
+  background: #fff;
+  border: 1px solid #d9d9d9;
+  color: #262626;
+}
+
+:deep(.ant-input:focus),
+:deep(.ant-input-number:focus),
+:deep(.ant-textarea:focus) {
+  border-color: #40a9ff;
+  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.1);
+}
+
+:deep(.ant-input::placeholder),
+:deep(.ant-textarea::placeholder) {
+  color: #8c8c8c;
 }
 
 :deep(.ant-descriptions-item-label) {
   background: #fafafa;
   font-weight: 500;
+  color: #595959;
+}
+
+:deep(.ant-descriptions-item-content) {
+  color: #262626;
+}
+
+:deep(.ant-descriptions-bordered .ant-descriptions-view) {
+  border: 1px solid #f0f0f0;
+}
+
+:deep(.ant-descriptions-bordered .ant-descriptions-item-label) {
+  border-right: 1px solid #f0f0f0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+:deep(.ant-descriptions-bordered .ant-descriptions-item-content) {
+  border-bottom: 1px solid #f0f0f0;
 }
 </style>

@@ -15,20 +15,20 @@ import com.dream.codegenerate.model.vo.LoginUserVO;
 import com.dream.codegenerate.model.vo.UserVO;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.beans.BeanUtils;
+import org.springframework.web.bind.annotation.*;
 import com.dream.codegenerate.model.entity.User;
 import com.dream.codegenerate.service.UserService;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * 用户 控制层。
  *
- *  
+ *
  */
 @RestController
 @RequestMapping("/user")
@@ -176,4 +176,27 @@ public class UserController {
         userVOPage.setRecords(userVOList);
         return ResultUtils.success(userVOPage);
     }
+
+    @PostMapping("/update/myinfo")
+    public BaseResponse<Boolean> updateMyInfo(HttpServletRequest request,
+                                              @RequestBody UserUpdateRequest userUpdateRequest) {
+        if (userUpdateRequest == null || userUpdateRequest.getId() == null) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        ThrowUtils.throwIf(!Objects.equals(userService.getLoginUser(request).getId(), userUpdateRequest.getId()),
+                ErrorCode.NO_AUTH_ERROR,"修改非本人信息");
+        User user = new User();
+        BeanUtils.copyProperties(userUpdateRequest, user);
+        boolean result = userService.updateById(user);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        return ResultUtils.success(true);
+    }
+
+    @PostMapping("/update/myavatar")
+    public BaseResponse<Boolean> updateMyAvatar( @RequestPart("file") MultipartFile multipartFile,Long id) {
+        User user = userService.getById(id);
+        ThrowUtils.throwIf(user == null, ErrorCode.PARAMS_ERROR);
+        return ResultUtils.success(userService.updateMyAvatar(multipartFile,user));
+    }
+
 }

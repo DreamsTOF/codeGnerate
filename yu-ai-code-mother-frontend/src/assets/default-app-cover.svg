@@ -1,0 +1,85 @@
+<svg width="400" height="240" viewBox="0 0 400 240" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1890ff;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:#40a9ff;stop-opacity:0.2" />
+    </linearGradient>
+
+    <linearGradient id="codeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1890ff;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#40a9ff;stop-opacity:0.6" />
+    </linearGradient>
+  </defs>
+
+  <!-- 背景 -->
+  <rect width="400" height="240" fill="url(#bgGradient)"/>
+
+  <!-- 装饰性网格线 -->
+  <g stroke="#1890ff" stroke-width="0.5" opacity="0.2">
+    <line x1="0" y1="60" x2="400" y2="60"/>
+    <line x1="0" y1="120" x2="400" y2="120"/>
+    <line x1="0" y1="180" x2="400" y2="180"/>
+    <line x1="100" y1="0" x2="100" y2="240"/>
+    <line x1="200" y1="0" x2="200" y2="240"/>
+    <line x1="300" y1="0" x2="300" y2="240"/>
+  </g>
+
+  <!-- 代码窗口背景 -->
+  <rect x="50" y="50" width="300" height="140" rx="8" fill="white" stroke="#e8ecef" stroke-width="1"/>
+
+  <!-- 代码窗口标题栏 -->
+  <rect x="50" y="50" width="300" height="30" rx="8" fill="#f8f9fa"/>
+  <rect x="50" y="70" width="300" height="120" fill="white"/>
+
+  <!-- 窗口控制按钮 -->
+  <circle cx="70" cy="65" r="4" fill="#ff5f56"/>
+  <circle cx="85" cy="65" r="4" fill="#ffbd2e"/>
+  <circle cx="100" cy="65" r="4" fill="#27c93f"/>
+
+  <!-- 代码行 -->
+  <g font-family="monospace" font-size="10" fill="#2c3e50">
+    <!-- 第1行 -->
+    <text x="70" y="90">&lt;div class="app"&gt;</text>
+    <!-- 第2行 -->
+    <text x="80" y="105">  &lt;h1&gt;Hello World&lt;/h1&gt;</text>
+    <!-- 第3行 -->
+    <text x="80" y="120">  &lt;p&gt;AI Generated App&lt;/p&gt;</text>
+    <!-- 第4行 -->
+    <text x="70" y="135">&lt;/div&gt;</text>
+  </g>
+
+  <!-- 代码高亮 -->
+  <g font-family="monospace" font-size="10" font-weight="bold">
+    <text x="70" y="90" fill="#1890ff">&lt;div</text>
+    <text x="90" y="90" fill="#27c93f">class</text>
+    <text x="105" y="90" fill="#ffbd2e">="app"</text>
+    <text x="130" y="90" fill="#1890ff">&gt;</text>
+
+    <text x="80" y="105" fill="#1890ff">&lt;h1</text>
+    <text x="95" y="105" fill="#1890ff">&gt;</text>
+    <text x="100" y="105" fill="#2c3e50">Hello World</text>
+    <text x="155" y="105" fill="#1890ff">&lt;/h1</text>
+    <text x="170" y="105" fill="#1890ff">&gt;</text>
+
+    <text x="80" y="120" fill="#1890ff">&lt;p</text>
+    <text x="90" y="120" fill="#1890ff">&gt;</text>
+    <text x="95" y="120" fill="#2c3e50">AI Generated App</text>
+    <text x="175" y="120" fill="#1890ff">&lt;/p</text>
+    <text x="185" y="120" fill="#1890ff">&gt;</text>
+
+    <text x="70" y="135" fill="#1890ff">&lt;/div</text>
+    <text x="105" y="135" fill="#1890ff">&gt;</text>
+  </g>
+
+  <!-- 装饰性元素 -->
+  <g opacity="0.3">
+    <circle cx="350" cy="30" r="20" fill="none" stroke="#1890ff" stroke-width="1"/>
+    <circle cx="30" cy="200" r="15" fill="none" stroke="#40a9ff" stroke-width="1"/>
+  </g>
+
+  <!-- 底部文字 -->
+  <text x="200" y="220" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#7f8c8d" font-weight="500">
+    AI Code Generator
+  </text>
+</svg>
