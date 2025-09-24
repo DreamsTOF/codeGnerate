@@ -9,10 +9,10 @@ import org.springframework.cache.annotation.EnableCaching;
 @EnableCaching
 @SpringBootApplication(exclude = {RedisEmbeddingStoreAutoConfiguration.class})
 @MapperScan("com.dream.codegenerate.mapper")
-public class YuAiCodeMotherApplication {
+public class CodeGenerateApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(YuAiCodeMotherApplication.class, args);
+        SpringApplication.run(CodeGenerateApplication.class, args);
     }
 
 }

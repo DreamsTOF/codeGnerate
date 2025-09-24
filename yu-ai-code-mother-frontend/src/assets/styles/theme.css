@@ -18,15 +18,15 @@
   --shadow-md: 0 3px 6px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 6px 16px rgba(0, 0, 0, 0.08);
 
-  /* 按钮样式 - 保持主题样式 */
-  --btn-primary-bg: linear-gradient(135deg, #1890ff, #40a9ff);
-  --btn-primary-hover-bg: linear-gradient(135deg, #40a9ff, #69c0ff);
+  /* 按钮样式 - 应用index.html的按钮样式 */
+  --btn-primary-bg: linear-gradient(135deg, #4dc6ff, #ff67b8);
+  --btn-primary-hover-bg: linear-gradient(135deg, #5dc6ff, #ff67c8);
   --btn-danger-bg: linear-gradient(135deg, #ff4d4f, #ff7875);
   --btn-danger-hover-bg: linear-gradient(135deg, #ff7875, #ffa39e);
-  --btn-shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
-  --btn-shadow-md: 0 4px 15px rgba(24, 144, 255, 0.3);
-  --btn-shadow-lg: 0 6px 20px rgba(24, 144, 255, 0.4);
-  --btn-border-radius: 6px;
+  --btn-shadow-sm: 0 4px 5px rgba(0, 0, 0, .3);
+  --btn-shadow-md: 0 4px 5px rgba(0, 0, 0, .3);
+  --btn-shadow-lg: 0 6px 8px rgba(0, 0, 0, .4);
+  --btn-border-radius: 10px;
 }
 
 /* 全局样式重置 */
@@ -156,13 +156,19 @@ body {
 .ant-btn-primary {
   background: var(--btn-primary-bg) !important;
   border: none !important;
-  color: white !important;
+  height: 30px !important;
+  border-radius: var(--btn-border-radius) !important;
+  color: #fff !important;
+  font-weight: bold !important;
+  font-size: 16px !important;
+  letter-spacing: 4px !important;
   box-shadow: var(--btn-shadow-md) !important;
+  transition: all 0.2s ease !important;
 }
 
 .ant-btn-primary:hover {
   background: var(--btn-primary-hover-bg) !important;
-  transform: translateY(-2px) !important;
+  transform: translateY(-1px) !important;
   box-shadow: var(--btn-shadow-lg) !important;
 }
 

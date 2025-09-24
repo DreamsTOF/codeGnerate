@@ -256,18 +256,5 @@ const doLogout = async () => {
   background: #f8f9fa !important;
 }
 
-/* 登录按钮样式 */
-:deep(.ant-btn-primary) {
-  background: #1890ff !important;
-  border: none !important;
-  border-radius: 6px !important;
-  font-weight: 500 !important;
-  transition: all 0.2s ease !important;
-}
-
-:deep(.ant-btn-primary:hover) {
-  background: #40a9ff !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 8px rgba(24, 144, 255, 0.3) !important;
-}
+/* 登录按钮样式使用全局主题样式 */
 </style>

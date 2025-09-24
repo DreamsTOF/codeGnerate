@@ -66,7 +66,8 @@
                 <a-avatar :src="aiAvatar" />
               </div>
               <div class="message-content">
-                <MarkdownRenderer v-if="message.content" :content="getFullMessageContent(message)" />
+                <!-- 【关键修改 1】：直接绑定 message.content -->
+                <MarkdownRenderer v-if="message.content" :content="message.content" />
                 <div v-if="message.loading" class="loading-indicator">
                   <a-spin size="small" />
                   <span>AI 正在思考...</span>
@@ -262,10 +263,9 @@ import {
   SaveOutlined,
   EyeOutlined,
   CodeOutlined,
-} from '@ant-design/icons-vue';
+}  from '@ant-design/icons-vue';
 import { startChatStream, type ChatStreamCallbacks } from '@/utils/chatStreamHandler.ts';
-import {type ParsedEventData} from '@/utils/eventDataProcessor.ts';
-import { save, list, compare, restore } from '@/api/appVersionController';
+import { save } from '@/api/appVersionController';
 
 // 懒加载组件
 import PreviewDisplay from './PreviewDisplay.vue';
@@ -278,22 +278,15 @@ const loginUserStore = useLoginUserStore();
 // 应用信息
 const appInfo = ref<API.AppVO>();
 const appId = ref<any>();
-
-// 为“保存版本”按钮新增 loading 状态
 const savingVersion = ref(false);
 
-// 对话相关
+// 【关键修改 2】：简化 Message 接口, 移除 toolInfo
 interface Message {
-  id?: number; // 【修改 1】增加 id 字段
+  id?: number;
   type: 'user' | 'ai';
   content: string;
   loading?: boolean;
   createTime?: string;
-  toolInfo?: {
-    toolName: string;
-    status: 'request' | 'stream' | 'executed';
-    content?: string;
-  };
 }
 
 const messages = ref<Message[]>([]);
@@ -339,27 +332,19 @@ const isAdmin = computed(() => {
 
 // 应用详情相关
 const appDetailVisible = ref(false);
-
-// 视图切换
 const activeView = ref<'preview' | 'code'>('preview');
 
-// 版本选择处理
 const handleSelectVersion = (version: any) => {
   console.log('选择版本:', version);
-  // 可以在这里添加版本选择的逻辑
 };
 
-// 版本回滚处理
 const handleRestoreVersion = (version: any) => {
   console.log('回滚版本:', version);
-  // 版本回滚成功后刷新应用信息
   setTimeout(() => {
     fetchAppInfo();
   }, 1000);
 };
 
-
-// 显示应用详情
 const showAppDetail = () => {
   appDetailVisible.value = true;
 };
@@ -382,7 +367,7 @@ const loadChatHistory = async (isLoadMore = false) => {
       if (chatHistories.length > 0) {
         const historyMessages: Message[] = chatHistories
           .map((chat) => ({
-            id: chat.id, // 【修改 2】保存消息的 id
+            id: chat.id,
             type: (chat.messageType === 'user' ? 'user' : 'ai') as 'user' | 'ai',
             content: chat.message || '',
             createTime: chat.createTime,
@@ -408,12 +393,10 @@ const loadChatHistory = async (isLoadMore = false) => {
   }
 };
 
-// 加载更多历史消息
 const loadMoreHistory = async () => {
   await loadChatHistory(true);
 };
 
-// 获取应用信息
 const fetchAppInfo = async () => {
   const id = route.params.id as string;
   if (!id) {
@@ -421,9 +404,7 @@ const fetchAppInfo = async () => {
     router.push('/');
     return;
   }
-
   appId.value = id;
-
   try {
     const res = await getAppVoById({ id: id as unknown as number });
     if (res.data.code === 0 && res.data.data) {
@@ -451,33 +432,27 @@ const fetchAppInfo = async () => {
   }
 };
 
-// 发送初始消息
 const sendInitialMessage = async (prompt: string) => {
   messages.value.push({
     type: 'user',
     content: prompt,
   });
-
   const aiMessageIndex = messages.value.length;
   messages.value.push({
     type: 'ai',
     content: '',
     loading: true,
   });
-
   await nextTick();
   scrollToBottom();
-
   isGenerating.value = true;
   await generateCode(prompt, aiMessageIndex);
 };
 
-// 发送消息
 const sendMessage = async () => {
   if (!userInput.value.trim() || isGenerating.value) {
     return;
   }
-
   let messageContent = userInput.value.trim();
   if (selectedElementInfo.value) {
     let elementContext = `\n\n选中元素信息：`;
@@ -495,109 +470,54 @@ const sendMessage = async () => {
     type: 'user',
     content: messageContent,
   });
-
   if (selectedElementInfo.value) {
     clearSelectedElement();
     if (isEditMode.value) {
       toggleEditMode();
     }
   }
-
   const aiMessageIndex = messages.value.length;
   messages.value.push({
     type: 'ai',
     content: '',
     loading: true,
   });
-
   await nextTick();
   scrollToBottom();
-
   isGenerating.value = true;
   await generateCode(messageContent, aiMessageIndex);
 };
 
-const getFullMessageContent = (message: Message) => {
-  let content = message.content || '';
-
-  if (message.toolInfo) {
-    const toolInfo = message.toolInfo;
-    let toolContent = '';
-
-    if (toolInfo.status === 'request') {
-      toolContent = `\n\n🔧 正在调用工具: ${toolInfo.toolName}`;
-      if (toolInfo.content) {
-        toolContent += `\n\`\`\`json\n${toolInfo.content}\n\`\`\``;
-      }
-    } else if (toolInfo.status === 'executed') {
-      toolContent = `\n\n✅ 工具执行完成: ${toolInfo.toolName}`;
-      if (toolInfo.content) {
-        toolContent += `\n\`\`\`\n${toolInfo.content}\n\`\`\``;
-      }
-    }
-    content += toolContent;
-  }
-  return content;
-};
-
-// 生成代码
+// 【关键修改 3】：重写 generateCode 函数，统一处理所有事件为文本流
 const generateCode = async (userMessage: string, aiMessageIndex: number) => {
-  let streamController: any = null;
-  let fullContent = '';
+
+  const appendContent = (text: string) => {
+    if (text) {
+      messages.value[aiMessageIndex].content += text;
+      scrollToBottom();
+    }
+  };
 
   const callbacks: ChatStreamCallbacks = {
-    onAiResponse: (chunk: string, rawData: ParsedEventData) => {
-      fullContent += chunk;
-      messages.value[aiMessageIndex].content = fullContent;
-      messages.value[aiMessageIndex].loading = false;
-      scrollToBottom();
+    onAiResponse: (chunk: string) => {
+      appendContent(chunk);
     },
-    onToolRequest: (data: any, rawData: ParsedEventData) => {
-      let toolContent = '';
-      if (data.arguments) {
-        try {
-          const args = JSON.parse(data.arguments);
-          toolContent = `参数: ${JSON.stringify(args, null, 2)}`;
-        } catch (e) {
-          toolContent = `参数: ${data.arguments}`;
-        }
-      } else {
-        toolContent = data.description || rawData.displayText || '正在调用工具...';
-      }
-      messages.value[aiMessageIndex].toolInfo = {
-        toolName: data.toolName || data.name || '未知工具',
-        status: 'request',
-        content: toolContent
-      };
-      scrollToBottom();
+    // --- 主要修改在这里 ---
+    onToolRequest: (data: any) =>
+    {
+
     },
-    onToolStream: (chunk: string, rawData: ParsedEventData) => {
-      if (messages.value[aiMessageIndex].toolInfo) {
-        messages.value[aiMessageIndex].toolInfo!.status = 'stream';
-        messages.value[aiMessageIndex].toolInfo!.content = (messages.value[aiMessageIndex].toolInfo?.content || '') + chunk;
-      } else {
-        messages.value[aiMessageIndex].toolInfo = { toolName: '工具', status: 'stream', content: chunk };
-      }
-      scrollToBottom();
+    // --- 修改结束 ---
+    onToolStream: (chunk: string) => {
+
     },
-    onToolExecuted: (data: any, rawData: ParsedEventData) => {
-      if (messages.value[aiMessageIndex].toolInfo) {
-        messages.value[aiMessageIndex].toolInfo!.status = 'executed';
-        messages.value[aiMessageIndex].toolInfo!.content = data.result || data.output || '工具执行完成';
-      } else {
-        messages.value[aiMessageIndex].toolInfo = {
-          toolName: data.toolName || data.name || '工具',
-          status: 'executed',
-          content: data.result || data.output || '工具执行完成'
-        };
-      }
-      scrollToBottom();
+    onToolExecuted: (data: any) => {
+
     },
     onDone: () => {
       isGenerating.value = false;
       messages.value[aiMessageIndex].loading = false;
-      setTimeout(async () => {
-        await fetchAppInfo();
+      setTimeout(() => {
         updatePreview();
       }, 1000);
     },
@@ -615,12 +535,11 @@ const generateCode = async (userMessage: string, aiMessageIndex: number) => {
   };
 
   try {
-    streamController = startChatStream({ appId: appId.value || '', userMessage: userMessage }, callbacks);
+    startChatStream({ appId: appId.value || '', userMessage: userMessage }, callbacks);
   } catch (error) {
     console.error('启动流式请求失败:', error);
     handleError(error, aiMessageIndex);
   }
-  return streamController;
 };
 
 const handleError = (error: unknown, aiMessageIndex: number) => {
@@ -635,14 +554,14 @@ const handleError = (error: unknown, aiMessageIndex: number) => {
 const updatePreview = () => {
   if (appId.value) {
     const codeGenType = appInfo.value?.codeGenType || CodeGenTypeEnum.HTML;
-    const newPreviewUrl = getStaticPreviewUrl(codeGenType, appId.value);
-    if (previewUrl.value !== newPreviewUrl) {
-      previewUrl.value = newPreviewUrl;
-    }
+    const timestamp = new Date().getTime();
+    const newPreviewUrl = `${getStaticPreviewUrl(codeGenType, appId.value)}?t=${timestamp}`;
+
+    // 强制iframe重新加载
+    previewUrl.value = newPreviewUrl;
     previewReady.value = true;
   }
 };
-
 
 const scrollToBottom = () => {
   if (messagesContainer.value) {
@@ -661,10 +580,6 @@ const saveCurrentVersion = async () => {
   }
   savingVersion.value = true;
   try {
-    // 【修改 3】从后往前遍历消息数组，找到最后一条包含 id 的消息
-    const lastMessageWithId = [...messages.value].reverse().find(m => m.id);
-    const lastChatHistoryId = lastMessageWithId ? lastMessageWithId.id : undefined;
-
     const codeGenTypeForApi = appInfo.value?.codeGenType?.toUpperCase() as API.AppVersionSaveRequest['codeGenType'];
     const params: API.AppVersionSaveRequest = {
       appId: appId.value as number,
@@ -813,7 +728,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  // EventSource will be cleaned up automatically
+  // EventSource will be cleaned up automatically by startChatStream handler
 });
 </script>
 
@@ -906,7 +821,7 @@ onUnmounted(() => {
 }
 
 .message-content {
-  max-width: 70%;
+  max-width: 80%;
   padding: 12px 16px;
   border-radius: 12px;
   line-height: 1.5;
@@ -919,8 +834,8 @@ onUnmounted(() => {
 }
 
 .ai-message .message-content {
-  background: #1a1a1a;;
-  color: #1a1a1a;
+  background: #1a1a1a;
+  color: #333;
   padding: 8px 12px;
 }
 
@@ -951,21 +866,6 @@ onUnmounted(() => {
 
 .input-wrapper {
   position: relative;
-}
-
-.input-wrapper .ant-input {
-  background: white;
-  border: 1px solid #d0d0d0;
-  color: #333;
-}
-
-.input-wrapper .ant-input:focus {
-  border-color: #1890ff;
-  box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
-}
-
-.input-wrapper .ant-input::placeholder {
-  color: #999;
 }
 
 .input-wrapper .ant-input {
@@ -1062,7 +962,6 @@ onUnmounted(() => {
     max-width: 85%;
   }
 
-  /* 选中元素信息样式 */
   .selected-element-alert {
     margin: 0 16px;
   }
@@ -1115,7 +1014,6 @@ onUnmounted(() => {
     border: 1px solid #e1e4e8;
   }
 
-  /* 编辑模式按钮样式 */
   .edit-mode-active {
     background-color: #52c41a !important;
     border-color: #52c41a !important;
@@ -1128,4 +1026,3 @@ onUnmounted(() => {
   }
 }
 </style>
-

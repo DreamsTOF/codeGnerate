@@ -154,34 +154,36 @@ public class AiCodeGeneratorFacade {
                         // 发送 AI 思考的文本流
                         AiResponseMessage eventDto = new AiResponseMessage(partialResponse);
                         sink.next(ServerSentEvent.<String>builder()
-                                .event(StreamMessageTypeEnum.AI_RESPONSE.getValue())
+                                .event(eventDto.getType())
                                 .data(JSONUtil.toJsonStr(eventDto))
                                 .build());
                     })
                     .onPartialToolExecutionRequest((index, toolExecutionRequest) -> {
                         String toolName = toolExecutionRequest.name();
                         // 检查是否是 特殊工具，如果是，则发送用于“前端回放”的特殊事件
-                        if (STREAMING_TOOLS.contains(toolName)) {
-                            StreamingToolMessage streamEvent = new StreamingToolMessage(toolExecutionRequest);
-                            sink.next(ServerSentEvent.<String>builder()
-                                    .event(StreamMessageTypeEnum.TOOL_STREAM.getValue())
-                                    .data(JSONUtil.toJsonStr(streamEvent))
-                                    .build());
-                        } else {
+//                        if (STREAMING_TOOLS.contains(toolName)) {
+//                            StreamingToolMessage streamEvent = new StreamingToolMessage(toolExecutionRequest);
+////                            streamEvent.setArguments("");
+//                            sink.next(ServerSentEvent.<String>builder()
+//                                    .event(StreamMessageTypeEnum.TOOL_STREAM.getValue())
+//                                    .data(JSONUtil.toJsonStr(streamEvent))
+//                                    .build());
+//                        } else {
                             // 对于其他工具，发送常规的请求事件
                             ToolRequestMessage eventDto = new ToolRequestMessage(toolExecutionRequest);
+//                            eventDto.setArguments("");
                             sink.next(ServerSentEvent.<String>builder()
-                                    .event(StreamMessageTypeEnum.TOOL_REQUEST.getValue())
+                                    .event(eventDto.getType())
                                     .data(JSONUtil.toJsonStr(eventDto))
                                     .build());
-                        }
+//                        }
                     })
                     .onToolExecuted(toolExecution -> {
                         // 发送工具执行完毕的确认事件
                         ToolExecutedMessage eventDto = new ToolExecutedMessage(toolExecution);
-                            eventDto.setArguments("");
+//                        eventDto.setArguments("");
                             sink.next(ServerSentEvent.<String>builder()
-                                    .event(StreamMessageTypeEnum.TOOL_EXECUTED.getValue())
+                                    .event(eventDto.getType())
                                     .data(JSONUtil.toJsonStr(eventDto))
                                     .build());
 
