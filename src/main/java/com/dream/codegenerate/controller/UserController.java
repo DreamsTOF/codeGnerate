@@ -193,10 +193,10 @@ public class UserController {
     }
 
     @PostMapping("/update/myavatar")
-    public BaseResponse<Boolean> updateMyAvatar( @RequestPart("file") MultipartFile multipartFile,Long id) {
-        User user = userService.getById(id);
-        ThrowUtils.throwIf(user == null, ErrorCode.PARAMS_ERROR);
-        return ResultUtils.success(userService.updateMyAvatar(multipartFile,user));
+    public BaseResponse<Boolean> updateMyAvatar(HttpServletRequest request, @RequestPart("file") MultipartFile multipartFile) {
+        User loginUser = userService.getLoginUser(request);
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
+        return ResultUtils.success(userService.updateMyAvatar(multipartFile,loginUser));
     }
 
 }

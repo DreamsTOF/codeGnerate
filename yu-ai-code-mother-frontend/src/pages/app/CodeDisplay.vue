@@ -97,7 +97,7 @@ const fetchFileList = async () => {
       message.error('获取文件列表失败：响应格式不正确');
       files.value = [];
     }
-  } catch (error: any) {
+  } catch (error) {
     message.error(error.message || '获取文件列表失败，请检查网络或后端服务');
     console.error('Failed to fetch file list:', error);
     files.value = [];
@@ -197,7 +197,7 @@ const copyCode = async () => {
   try {
     await navigator.clipboard.writeText(fileContent.value);
     message.success('代码已复制到剪贴板');
-  } catch (err) {
+  } catch (error) {
     message.error('复制失败');
   }
 };

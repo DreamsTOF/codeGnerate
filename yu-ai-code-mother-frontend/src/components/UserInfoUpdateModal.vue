@@ -17,26 +17,18 @@
             {{ formState.userName?.charAt(0) || 'U' }}
           </a-avatar>
           <div class="avatar-actions">
+            <!-- 核心修改：移除了 custom-request 属性 -->
             <a-upload
               :show-upload-list="false"
               :before-upload="beforeAvatarUpload"
-              :custom-request="handleAvatarUpload"
               accept="image/*"
+              :disabled="uploadingAvatar"
             >
-              <a-button size="small">
+              <a-button size="small" :loading="uploadingAvatar">
                 <template #icon><UploadOutlined /></template>
-                上传头像
+                上传新头像
               </a-button>
             </a-upload>
-            <a-button
-              v-if="formState.userAvatar"
-              size="small"
-              danger
-              @click="removeAvatar"
-            >
-              <template #icon><DeleteOutlined /></template>
-              移除
-            </a-button>
           </div>
         </div>
       </a-form-item>
@@ -51,7 +43,7 @@
       <a-form-item label="新密码" :help="passwordHelpText" :validate-status="passwordStatus">
         <a-input-password
           v-model:value="formState.userPassword"
-          placeholder="至少8个字符"
+          placeholder="至少8个字符，留空则不修改"
           :visibilityToggle="true"
           @change="checkPasswordStrength"
         />
@@ -73,9 +65,9 @@
 <script lang="ts" setup>
 import { ref, watch } from 'vue'
 import { message } from 'ant-design-vue'
-import { updateUser,updateMyInfo,updateMyAvatar } from '@/api/userController'
+import { updateUser, updateMyInfo, updateMyAvatar } from '@/api/userController'
 import { useLoginUserStore } from '@/stores/loginUser.ts'
-import { UploadOutlined, DeleteOutlined } from '@ant-design/icons-vue'
+import { UploadOutlined } from '@ant-design/icons-vue'
 
 const props = defineProps({
   open: Boolean,
@@ -87,9 +79,7 @@ const emit = defineEmits(['update:open', 'updated'])
 
 const loginUserStore = useLoginUserStore()
 const visible = ref(props.open)
-const formState = ref({
-  ...props.userData,
-})
+const formState = ref<any>({})
 
 // 头像相关状态
 const previewAvatar = ref('')
@@ -123,154 +113,118 @@ watch(
 )
 watch(
   () => props.userData,
-  (val) =>
-    (formState.value = {
+  (val) => {
+    formState.value = {
       ...val,
-      userPassword: '', // 确保每次用户数据变化时密码字段被清空
-    }),
-  { deep: true },
+      userPassword: '',
+    }
+    if (val) {
+      previewAvatar.value = val.userAvatar
+    }
+  },
+  { deep: true, immediate: true },
 )
 watch(visible, (val) => emit('update:open', val))
 
 const handleOk = async () => {
-  // 验证密码
   if (formState.value.userPassword && formState.value.userPassword.length < 8) {
     message.error('密码长度不能少于8个字符')
     return
   }
 
   try {
-    // 准备提交数据
-    const submitData = {
-      ...formState.value,
-    }
-
-    // 如果密码为空，则删除密码字段不提交
+    const submitData = { ...formState.value }
     if (!submitData.userPassword) {
       delete submitData.userPassword
     }
 
-    let res;
-    if (!props.isSelf) {
-      res = await updateUser(submitData)
-    } else {
-      res = await updateMyInfo(submitData)
-    }
-    if (res.data.code === 0) {
+    const res = props.isSelf ? await updateMyInfo(submitData) : await updateUser(submitData);
+
+    if (res?.data?.code === 0) {
       message.success('修改成功')
-
-      // 如果是修改当前用户，更新store
       if (props.isSelf) {
-        loginUserStore.setLoginUser({
-          ...loginUserStore.loginUser,
-          ...formState.value,
-        })
+        const updatedUserData = { ...loginUserStore.loginUser, ...formState.value }
+        loginUserStore.setLoginUser(updatedUserData)
       }
-
       emit('updated', formState.value)
       visible.value = false
     } else {
-      message.error('修改失败: ' + res.data.message)
+      message.error('修改失败: ' + (res?.data?.message || '未知错误'))
     }
-  } catch (e) {
-    message.error('修改失败')
+  } catch (e: any) {
+    message.error('修改失败: ' + e.message)
   }
 }
 
-// 头像上传相关方法
+/**
+ * 核心修改：在 before-upload 钩子中处理所有逻辑
+ */
 const beforeAvatarUpload = (file: File) => {
+  // 1. 文件校验
   const isImage = file.type.startsWith('image/')
-  const isLt5M = file.size / 1024 / 1024 < 5
-
   if (!isImage) {
     message.error('只能上传图片文件!')
-    return false
+    return false; // 返回 false 阻止组件默认行为
   }
+  const isLt5M = file.size / 1024 / 1024 < 5
   if (!isLt5M) {
     message.error('图片大小不能超过 5MB!')
-    return false
+    return false; // 返回 false 阻止组件默认行为
   }
 
-  // 预览图片
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    previewAvatar.value = e.target?.result as string
-  }
-  reader.readAsDataURL(file)
+  // 2. 创建本地预览
+  previewAvatar.value = URL.createObjectURL(file);
 
-  return false // 阻止默认上传行为
+  // 3. 手动调用上传函数
+  handleAvatarUpload(file);
+
+  // 4. 返回 false，告诉 a-upload 组件我们的任务已经完成，不需要它再做任何事
+  return false;
 }
 
-const handleAvatarUpload = async ({ file }: any) => {
+/**
+ * 上传头像的实际执行函数
+ */
+const handleAvatarUpload = async (file: File) => {
   if (!props.isSelf) {
-    message.error('只能修改自己的头像')
-    return
+    message.error('只能修改自己的头像');
+    return;
   }
 
-  uploadingAvatar.value = true
+  uploadingAvatar.value = true;
+  const originalAvatar = formState.value.userAvatar;
   try {
-    const formData = new FormData()
-    formData.append('file', file)
+    const res = await updateMyAvatar(file);
 
-    const res = await updateMyAvatar({}, formData)
-    if (res.data.code === 0) {
-      message.success('头像上传成功')
-      formState.value.userAvatar = res.data.data || previewAvatar.value
+    if (res?.data?.code === 0) {
+      message.success('头像上传成功');
+      const newAvatarUrl = res.data.data;
+      formState.value.userAvatar = newAvatarUrl;
+      previewAvatar.value = newAvatarUrl;
 
-      // 更新store中的头像
       if (loginUserStore.loginUser) {
         loginUserStore.setLoginUser({
           ...loginUserStore.loginUser,
-          userAvatar: formState.value.userAvatar
-        })
+          userAvatar: newAvatarUrl,
+        });
       }
     } else {
-      message.error('头像上传失败: ' + res.data.message)
-      previewAvatar.value = ''
+      message.error('头像上传失败: ' + (res?.data?.message || '未知错误'));
+      previewAvatar.value = originalAvatar;
     }
-  } catch (error) {
-    message.error('头像上传失败')
-    previewAvatar.value = ''
+  } catch (error: any) {
+    message.error('头像上传失败: ' + error.message);
+    previewAvatar.value = originalAvatar;
   } finally {
-    uploadingAvatar.value = false
+    uploadingAvatar.value = false;
   }
-}
-
-const removeAvatar = async () => {
-  if (!props.isSelf) {
-    message.error('只能移除自己的头像')
-    return
-  }
-
-  try {
-    const res = await updateMyAvatar({ avatarUrl: '' }, {})
-    if (res.data.code === 0) {
-      message.success('头像移除成功')
-      formState.value.userAvatar = ''
-      previewAvatar.value = ''
-
-      // 更新store中的头像
-      if (loginUserStore.loginUser) {
-        loginUserStore.setLoginUser({
-          ...loginUserStore.loginUser,
-          userAvatar: ''
-        })
-      }
-    } else {
-      message.error('头像移除失败: ' + res.data.message)
-    }
-  } catch (error) {
-    message.error('头像移除失败')
-  }
-}
+};
 
 const handleCancel = () => {
-  // 重置密码字段
   formState.value.userPassword = ''
   passwordStatus.value = ''
   passwordHelpText.value = ''
-  // 重置头像预览
-  previewAvatar.value = ''
+  previewAvatar.value = props.userData?.userAvatar || ''
   visible.value = false
 }
 </script>
@@ -280,29 +234,24 @@ const handleCancel = () => {
   display: flex;
   align-items: center;
   gap: 16px;
-}
-
-.avatar-preview {
-  flex-shrink: 0;
-  border: 2px dashed #d9d9d9;
-  transition: border-color 0.3s ease;
-}
-
-.avatar-preview:hover {
-  border-color: #1890ff;
-}
-
-.avatar-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-/* 头像预览容器 */
-.avatar-upload {
   background: #fafafa;
   padding: 16px;
   border-radius: 8px;
   border: 1px solid #f0f0f0;
 }
+.avatar-preview {
+  flex-shrink: 0;
+  border: 2px dashed #d9d9d9;
+  transition: border-color 0.3s ease;
+  cursor: pointer;
+}
+.avatar-preview:hover {
+  border-color: #1890ff;
+}
+.avatar-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 </style>
+

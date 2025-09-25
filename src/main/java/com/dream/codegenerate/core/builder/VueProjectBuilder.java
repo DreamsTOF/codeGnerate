@@ -1,6 +1,8 @@
 package com.dream.codegenerate.core.builder;
 
 import cn.hutool.core.util.RuntimeUtil;
+import com.dream.codegenerate.exception.ErrorCode;
+import com.dream.codegenerate.exception.ThrowUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -57,6 +59,7 @@ public class VueProjectBuilder {
         // 执行 npm run build
         if (!executeNpmBuild(projectDir)) {
             log.error("npm run build 执行失败：{}", projectPath);
+            ThrowUtils.throwIf(true, ErrorCode.SYSTEM_ERROR, "构建失败");
             return false;
         }
         // 验证 dist 目录是否生成

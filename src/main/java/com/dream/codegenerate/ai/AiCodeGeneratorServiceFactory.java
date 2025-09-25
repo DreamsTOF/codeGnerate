@@ -15,13 +15,19 @@ import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.service.AiServices;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.ResourceUtils;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.time.Duration;
 import java.util.HashMap;
@@ -45,6 +51,20 @@ public class AiCodeGeneratorServiceFactory {
     @Resource
     private ToolManager toolManager;
 
+    @Value("classpath:prompt/codegen-vue-project-system-prompt.txt")
+    private org.springframework.core.io.Resource vueProjectPromptResource;
+
+    @Value("classpath:prompt/codegen-html-system-prompt.txt")
+    private org.springframework.core.io.Resource htmlPromptResource;
+
+    @Value("classpath:prompt/codegen-multi-file-system-prompt.txt")
+    private org.springframework.core.io.Resource multiFilePromptResource;
+
+    // 3. 用于缓存Prompt文件内容的字段
+    private  String vueProjectPromptContent;
+    private  String htmlPromptContent;
+    private  String multiFilePromptContent;
+
     /**
      * AI 服务实例缓存
      * 缓存策略：
@@ -60,7 +80,25 @@ public class AiCodeGeneratorServiceFactory {
                 log.debug("AI 服务实例被移除，缓存键: {}, 原因: {}", key, cause);
             })
             .build();
+    @PostConstruct
+    public void initializePrompts() {
+        log.info("开始加载 AI System Prompts...");
+        try {
+            vueProjectPromptContent = readResourceAsString(vueProjectPromptResource);
+            htmlPromptContent = readResourceAsString(htmlPromptResource);
+            multiFilePromptContent = readResourceAsString(multiFilePromptResource);
+            log.info("所有 AI System Prompts 加载成功!");
+        } catch (IOException e) {
+            log.error("加载 AI System Prompt 文件时发生致命错误", e);
+            throw new IllegalStateException("无法加载必要的AI Prompt配置文件", e);
+        }
+    }
 
+    private String readResourceAsString(org.springframework.core.io.Resource resource) throws IOException {
+        try (InputStream inputStream = resource.getInputStream()) {
+            return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+        }
+    }
     /**
      * 根据 appId 获取服务（为了兼容老逻辑）
      *
@@ -183,36 +221,26 @@ public class AiCodeGeneratorServiceFactory {
 
         // 2. 根据任务类型选择不同的模型和 Prompt
         StreamingChatModel selectedModel;
-        String promptResourcePath;
+        final String systemPromptContent;
 
         switch (codeGenType) {
             case VUE_PROJECT:
                 log.info("任务类型: {}, 选择【高级推理模型】", codeGenType.getValue());
-                selectedModel = SpringContextUtil.getBean("reasoningStreamingChatModelPrototype", StreamingChatModel.class);
-                promptResourcePath = "prompt/codegen-vue-project-system-prompt.txt";
+                selectedModel = SpringContextUtil.getBean("anthropicStreamingChatModelPrototype", StreamingChatModel.class);
+                systemPromptContent = this.vueProjectPromptContent;;
                 break;
 
             case HTML:
             case MULTI_FILE:
                 log.info("任务类型: {}, 选择【标准基础模型】", codeGenType.getValue());
                 selectedModel = SpringContextUtil.getBean("streamingChatModelPrototype", StreamingChatModel.class);
-                promptResourcePath = (codeGenType == CodeGenTypeEnum.HTML)
-                        ? "prompt/codegen-html-system-prompt.txt"
-                        : "prompt/codegen-multi-file-system-prompt.txt";
+                systemPromptContent = (codeGenType == CodeGenTypeEnum.HTML)
+                        ? this.htmlPromptContent // <-- 使用缓存的字段
+                        : this.multiFilePromptContent; // <-- 使用缓存的字段
                 break;
 
             default:
                 throw new BusinessException(ErrorCode.PARAMS_ERROR, "不支持的代码生成类型");
-        }
-
-        // 3. 加载 System Prompt 内容
-        final String systemPromptContent;
-        try {
-            File file = ResourceUtils.getFile("classpath:" + promptResourcePath);
-            systemPromptContent = Files.readString(file.toPath());
-        } catch (Exception e) {
-            log.error("加载 System Prompt 文件失败: {}", promptResourcePath, e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "加载AI配置失败");
         }
 
         // 4. 构建统一的 AI 服务

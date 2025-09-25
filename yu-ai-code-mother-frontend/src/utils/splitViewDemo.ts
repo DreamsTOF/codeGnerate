@@ -163,9 +163,3 @@ function setupSyncScroll() {
 }`
   }
 ]
-
-// 如果在浏览器环境，可以运行演示
-if (typeof window !== 'undefined') {
-  (window as any).simulateSplitView = simulateSplitView
-  (window as any).splitViewFeatures = features
-}

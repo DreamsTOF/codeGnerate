@@ -1,5 +1,6 @@
 package com.dream.codegenerate.config;
 
+import dev.langchain4j.http.client.spring.restclient.SpringRestClientBuilder;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import lombok.Data;
@@ -7,6 +8,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
+
+import java.time.Duration;
 
 @Configuration
 @ConfigurationProperties(prefix = "langchain4j.open-ai.reasoning-streaming-chat-model")
@@ -34,6 +37,8 @@ public class ReasoningStreamingChatModelConfig {
     @Scope("prototype")
     public StreamingChatModel reasoningStreamingChatModelPrototype() {
         return OpenAiStreamingChatModel.builder()
+                .timeout(Duration.ofMinutes(5))
+                .httpClientBuilder(new SpringRestClientBuilder())
                 .apiKey(apiKey)
                 .baseUrl(baseUrl)
                 .modelName(modelName)

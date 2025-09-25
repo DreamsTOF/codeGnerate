@@ -5,15 +5,19 @@
       <div class="version-title">
         <HistoryOutlined />
         版本历史
+        <div class="refresh-button">
+          <a-button
+            type="primary"
+            shape="circle"
+            size="small"
+            @click="refreshVersions"
+            :loading="loading"
+            title="刷新版本列表"
+          >
+            <template #icon><ReloadOutlined /></template>
+          </a-button>
+        </div>
       </div>
-      <a-button
-        type="text"
-        size="small"
-        @click="refreshVersions"
-        :loading="loading"
-      >
-        <template #icon><ReloadOutlined /></template>
-      </a-button>
     </div>
 
     <!-- 版本列表 -->
@@ -87,51 +91,79 @@
       :footer="null"
       @cancel="closeCompareModal"
     >
-      <div v-if="compareData" class="compare-content">
+      <div v-if="compareData" class="compare-container">
+        <!-- 版本信息头 -->
         <div class="compare-header">
-          <div class="compare-from">
+          <div class="compare-info">
             <h4>源版本: {{ compareData.fromVersionData?.version }}</h4>
             <p>{{ compareData.fromVersionData?.message || '无描述' }}</p>
           </div>
-          <div class="compare-to">
+          <div class="compare-info">
             <h4>目标版本: {{ compareData.toVersionData?.version }}</h4>
             <p>{{ compareData.toVersionData?.message || '无描述' }}</p>
           </div>
         </div>
-        <div class="compare-diff">
-          <a-tabs>
-            <a-tab-pane key="content" tab="代码内容">
-              <div class="diff-content">
-                <div class="diff-section">
-                  <h5>源版本代码</h5>
-                  <pre><code>{{ compareData.fromVersionData?.content || '无内容' }}</code></pre>
-                </div>
-                <div class="diff-section">
-                  <h5>目标版本代码</h5>
-                  <pre><code>{{ compareData.toVersionData?.content || '无内容' }}</code></pre>
-                </div>
-              </div>
-            </a-tab-pane>
-          </a-tabs>
+
+        <!-- 文件选择器 -->
+        <div class="file-selector">
+          <a-tag
+            v-for="file in fileList"
+            :key="file"
+            :color="selectedFile === file ? 'blue' : 'default'"
+            @click="selectedFile = file"
+            style="cursor: pointer;"
+          >
+            {{ file }}
+          </a-tag>
         </div>
+
+        <!-- 差异对比视图 -->
+        <div class="diff-view-container">
+          <div class="diff-view">
+            <div class="diff-pane">
+              <div
+                v-for="(line, index) in alignedDiff"
+                :key="`left-${index}`"
+                class="diff-line"
+                :class="`diff-line-${line.left.type}`"
+              >
+                <span class="line-number">{{ line.left.lineNumber }}</span>
+                <pre class="line-content">{{ line.left.content }}</pre>
+              </div>
+            </div>
+            <div class="diff-pane">
+              <div
+                v-for="(line, index) in alignedDiff"
+                :key="`right-${index}`"
+                class="diff-line"
+                :class="`diff-line-${line.right.type}`"
+              >
+                <span class="line-number">{{ line.right.lineNumber }}</span>
+                <pre class="line-content">{{ line.right.content }}</pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-else>
+        <a-spin tip="加载对比数据中..." />
       </div>
     </a-modal>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from 'vue';
+import { ref, onMounted, watch, computed } from 'vue';
 import { message } from 'ant-design-vue';
 import {
   HistoryOutlined,
   ReloadOutlined,
   FileImageOutlined,
-  MoreOutlined,
   DiffOutlined,
   UndoOutlined,
 } from '@ant-design/icons-vue';
 import { list, compare, restore } from '@/api/appVersionController';
-// 类型从 API 命名空间中获取
+// 假设的类型定义，实际项目中请从后端接口类型中导入
 
 interface Props {
   appId: number;
@@ -155,6 +187,85 @@ const selectedVersionId = ref<number | null>(null);
 // 对比相关
 const compareModalVisible = ref(false);
 const compareData = ref<API.AppVersionCompareVO | null>(null);
+const fromContent = ref<Record<string, string>>({});
+const toContent = ref<Record<string, string>>({});
+const selectedFile = ref<string | null>(null);
+
+// --- Diff 相关逻辑 ---
+type DiffLineType = 'added' | 'removed' | 'unchanged' | 'empty';
+interface DiffLine {
+  content: string;
+  type: DiffLineType;
+  lineNumber?: number;
+}
+interface AlignedDiff {
+  left: DiffLine;
+  right: DiffLine;
+}
+
+// 基于LCS算法生成对齐的差异
+const alignedDiff = computed((): AlignedDiff[] => {
+  if (!selectedFile.value) return [];
+
+  const oldText = fromContent.value[selectedFile.value] || '';
+  const newText = toContent.value[selectedFile.value] || '';
+  const oldLines = oldText.split('\n');
+  const newLines = newText.split('\n');
+
+  // LCS 矩阵
+  const lcsMatrix = Array(oldLines.length + 1).fill(null).map(() => Array(newLines.length + 1).fill(0));
+  for (let i = 1; i <= oldLines.length; i++) {
+    for (let j = 1; j <= newLines.length; j++) {
+      if (oldLines[i - 1] === newLines[j - 1]) {
+        lcsMatrix[i][j] = lcsMatrix[i - 1][j - 1] + 1;
+      } else {
+        lcsMatrix[i][j] = Math.max(lcsMatrix[i - 1][j], lcsMatrix[i][j - 1]);
+      }
+    }
+  }
+
+  // 回溯LCS矩阵生成diff
+  const result: AlignedDiff[] = [];
+  let i = oldLines.length;
+  let j = newLines.length;
+  let oldLineNum = oldLines.length;
+  let newLineNum = newLines.length;
+
+  while (i > 0 || j > 0) {
+    if (i > 0 && j > 0 && oldLines[i - 1] === newLines[j - 1]) {
+      result.unshift({
+        left: { content: oldLines[i - 1], type: 'unchanged', lineNumber: oldLineNum-- },
+        right: { content: newLines[j - 1], type: 'unchanged', lineNumber: newLineNum-- }
+      });
+      i--; j--;
+    } else if (j > 0 && (i === 0 || lcsMatrix[i][j - 1] >= lcsMatrix[i - 1][j])) {
+      result.unshift({
+        left: { content: '', type: 'empty' },
+        right: { content: newLines[j - 1], type: 'added', lineNumber: newLineNum-- }
+      });
+      j--;
+    } else if (i > 0 && (j === 0 || lcsMatrix[i][j - 1] < lcsMatrix[i - 1][j])) {
+      result.unshift({
+        left: { content: oldLines[i - 1], type: 'removed', lineNumber: oldLineNum-- },
+        right: { content: '', type: 'empty' }
+      });
+      i--;
+    } else {
+      break;
+    }
+  }
+  return result;
+});
+
+
+// 从两个版本的内容中提取所有文件名
+const fileList = computed(() => {
+  const fromKeys = Object.keys(fromContent.value);
+  const toKeys = Object.keys(toContent.value);
+  const allKeys = new Set([...fromKeys, ...toKeys]);
+  return Array.from(allKeys).sort();
+});
+
 
 // 加载版本列表
 const loadVersions = async () => {
@@ -202,6 +313,9 @@ const compareVersion = async (version: API.AppVersionQueryVO) => {
     return;
   }
 
+  compareModalVisible.value = true;
+  compareData.value = null; // 清空旧数据
+
   try {
     const res = await compare({
       appId: props.appId,
@@ -211,13 +325,29 @@ const compareVersion = async (version: API.AppVersionQueryVO) => {
 
     if (res.data.code === 0 && res.data.data) {
       compareData.value = res.data.data;
-      compareModalVisible.value = true;
+      // 解析 JSON 字符串
+      try {
+        fromContent.value = JSON.parse(res.data.data.fromVersionData?.content || '{}');
+        toContent.value = JSON.parse(res.data.data.toVersionData?.content || '{}');
+        // 默认选择第一个文件
+        if (fileList.value.length > 0) {
+          selectedFile.value = fileList.value[0];
+        }
+      } catch (e) {
+        console.error("解析版本内容失败: ", e);
+        message.error("解析版本内容失败，可能不是有效的JSON格式。");
+        fromContent.value = { 'error.txt': '源版本内容解析失败' };
+        toContent.value = { 'error.txt': '目标版本内容解析失败' };
+        selectedFile.value = 'error.txt';
+      }
     } else {
       message.error('版本对比失败：' + res.data.message);
+      closeCompareModal();
     }
   } catch (error) {
     console.error('版本对比失败：', error);
     message.error('版本对比失败');
+    closeCompareModal();
   }
 };
 
@@ -225,6 +355,9 @@ const compareVersion = async (version: API.AppVersionQueryVO) => {
 const closeCompareModal = () => {
   compareModalVisible.value = false;
   compareData.value = null;
+  fromContent.value = {};
+  toContent.value = {};
+  selectedFile.value = null;
 };
 
 // 回滚版本
@@ -255,34 +388,6 @@ const handleImageError = (event: Event) => {
   if (placeholder) {
     placeholder.style.display = 'flex';
   }
-};
-
-// 获取存储类型颜色
-const getStorageTypeColor = (type?: string) => {
-  return type === 'FULL' ? 'blue' : 'green';
-};
-
-// 获取存储类型文本
-const getStorageTypeText = (type?: string) => {
-  return type === 'FULL' ? '完整版本' : '差异版本';
-};
-
-// 格式化时间
-const formatTime = (time?: string) => {
-  if (!time) return '';
-  const date = new Date(time);
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const minutes = Math.floor(diff / 60000);
-  const hours = Math.floor(diff / 3600000);
-  const days = Math.floor(diff / 86400000);
-
-  if (minutes < 1) return '刚刚';
-  if (minutes < 60) return `${minutes}分钟前`;
-  if (hours < 24) return `${hours}小时前`;
-  if (days < 7) return `${days}天前`;
-
-  return date.toLocaleDateString();
 };
 
 // 监听appId变化
@@ -316,9 +421,8 @@ onMounted(() => {
 
 .version-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 16px;
+  padding: 16px 16px 8px 16px;
   border-bottom: 1px solid #e8e8e8;
 }
 
@@ -331,53 +435,35 @@ onMounted(() => {
   color: #1a1a1a;
 }
 
+.refresh-button .ant-btn {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: #1890ff;
+  border-color: #1890ff;
+  color: white;
+  font-size: 12px;
+}
+
+.refresh-button .ant-btn:hover {
+  background: #40a9ff;
+  border-color: #40a9ff;
+}
+
 .version-list {
   flex: 1;
   overflow-y: auto;
   padding: 8px;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
-  align-content: start;
-  /* 自定义滚动条样式 */
-  scrollbar-width: thin;
-  scrollbar-color: #c1c1c1 #f1f1f1;
-}
-
-.version-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.version-list::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 3px;
-}
-
-.version-list::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
-  border-radius: 3px;
-  transition: background-color 0.2s ease;
-}
-
-.version-list::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-.version-list::-webkit-scrollbar-corner {
-  background: transparent;
-}
-
-.loading-container {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
   gap: 8px;
-  padding: 32px;
-  color: #666;
-  grid-column: 1 / -1;
+  align-content: start;
 }
 
+.loading-container,
 .empty-container {
   display: flex;
   flex-direction: column;
@@ -385,8 +471,7 @@ onMounted(() => {
   justify-content: center;
   gap: 8px;
   padding: 32px;
-  color: #999;
-  grid-column: 1 / -1;
+  color: #666;
 }
 
 .version-item {
@@ -400,7 +485,7 @@ onMounted(() => {
   border-radius: 8px;
   overflow: hidden;
   transition: all 0.2s ease;
-  height: 100%;
+  width: 100%;
   box-shadow: inset 0 0 10px rgb(255, 255, 255);
 }
 
@@ -412,12 +497,11 @@ onMounted(() => {
 .version-item-selected .version-card {
   border-color: #1890ff;
   background: #e6f7ff;
-  box-shadow: 0 4px 12px rgba(24, 144, 255, 0.25);
 }
 
 .version-thumbnail {
   width: 100%;
-  height: 120px;
+  height: 80px;
   background: #f5f5f5;
   position: relative;
   overflow: hidden;
@@ -435,32 +519,15 @@ onMounted(() => {
 }
 
 .thumbnail-placeholder {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #f5f5f5;
-  color: #999;
-  font-size: 24px;
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  background: #f5f5f5; color: #999; font-size: 24px;
 }
 
-/* 悬停操作层 */
 .version-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.2s ease;
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.7); display: flex; align-items: center;
+  justify-content: center; opacity: 0; transition: opacity 0.2s ease;
   backdrop-filter: blur(2px);
 }
 
@@ -476,182 +543,107 @@ onMounted(() => {
 }
 
 .overlay-actions .ant-btn {
-  min-width: 32px;
-  height: 32px;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  font-size: 14px;
+  min-width: 32px; height: 32px; padding: 0; display: flex;
+  align-items: center; justify-content: center; border-radius: 6px; font-size: 14px;
 }
 
 .version-number {
-  padding: 6px 4px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #1a1a1a;
-  text-align: center;
-  background: #fafafa;
-  border-top: 1px solid #f0f0f0;
+  padding: 6px 4px; font-size: 11px; font-weight: 600; color: #1a1a1a;
+  text-align: center; background: #fafafa; border-top: 1px solid #f0f0f0;
 }
 
-.compare-content {
+/* --- 新增/修改的对比弹窗样式 --- */
+.compare-container {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  height: 75vh;
 }
 
 .compare-header {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  padding: 16px;
+  padding: 12px 16px;
   background: #f5f5f5;
   border-radius: 8px;
 }
 
-.compare-from,
-.compare-to {
+.compare-info {
   flex: 1;
 }
 
-.compare-from h4,
-.compare-to h4 {
-  margin: 0 0 8px 0;
+.compare-info h4 {
+  margin: 0 0 4px 0;
   color: #1a1a1a;
 }
 
-.compare-from p,
-.compare-to p {
+.compare-info p {
   margin: 0;
   color: #666;
-  font-size: 14px;
-}
-
-.diff-content {
-  display: flex;
-  gap: 16px;
-  max-height: 60vh;
-  overflow-y: auto;
-}
-
-.diff-section {
-  flex: 1;
-  background: #f8f9fa;
-  border-radius: 6px;
-  padding: 16px;
-}
-
-.diff-section h5 {
-  margin: 0 0 12px 0;
-  color: #1a1a1a;
-  font-size: 14px;
-}
-
-.diff-section pre {
-  margin: 0;
-  padding: 12px;
-  background: white;
-  border-radius: 4px;
-  border: 1px solid #e8e8e8;
   font-size: 12px;
-  line-height: 1.4;
-  overflow-x: auto;
 }
 
-.diff-section code {
-  font-family: 'Monaco', 'Menlo', monospace;
+.file-selector {
+  padding: 8px;
+  background: #fafafa;
+  border-radius: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.diff-view-container {
+  flex: 1;
+  overflow: auto;
+  border: 1px solid #e8e8e8;
+  border-radius: 6px;
+}
+
+.diff-view {
+  display: flex;
+  width: 100%;
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+  font-size: 12px;
+}
+
+.diff-pane {
+  flex: 1;
+  width: 50%;
+  min-width: 0;
+}
+
+.diff-pane:first-child {
+  border-right: 1px solid #e8e8e8;
+}
+
+.diff-line {
+  display: flex;
+  align-items: center;
+  min-height: 20px;
+  line-height: 20px;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.line-number {
+  min-width: 40px;
+  padding: 0 10px;
+  text-align: right;
+  color: #aaa;
+  background-color: #f7f7f7;
+  user-select: none;
+}
+
+.line-content {
+  flex-grow: 1;
+  padding: 0 10px;
+  margin: 0;
   white-space: pre-wrap;
   word-break: break-all;
 }
 
-/* 响应式设计 */
-@media (max-width: 1024px) {
-  .version-sidebar {
-    width: 280px;
-  }
-
-  .version-list {
-    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-    gap: 8px;
-  }
-
-  .version-thumbnail {
-    height: 100px;
-  }
-
-  /* 移动端优化滚动条 */
-  .version-list::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  .thumbnail-placeholder {
-    font-size: 20px;
-  }
-
-  .overlay-actions .ant-btn {
-    min-width: 28px;
-    height: 28px;
-    font-size: 12px;
-  }
-
-  .version-number {
-    font-size: 10px;
-    padding: 4px 2px;
-  }
-
-  .diff-content {
-    flex-direction: column;
-  }
-}
-
-@media (max-width: 768px) {
-  .version-sidebar {
-    width: 100%;
-    height: 200px;
-  }
-
-  .version-list {
-    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-    gap: 6px;
-  }
-
-  .version-thumbnail {
-    height: 90px;
-  }
-
-  /* 移动端滚动条更细 */
-  .version-list::-webkit-scrollbar {
-    width: 3px;
-  }
-
-  .version-list::-webkit-scrollbar-thumb {
-    background: #d0d0d0;
-  }
-
-  .version-list::-webkit-scrollbar-thumb:hover {
-    background: #b0b0b0;
-  }
-
-  .thumbnail-placeholder {
-    font-size: 18px;
-  }
-
-  .overlay-actions {
-    gap: 4px;
-    padding: 4px;
-  }
-
-  .overlay-actions .ant-btn {
-    min-width: 24px;
-    height: 24px;
-    font-size: 10px;
-  }
-
-  .version-number {
-    font-size: 9px;
-    padding: 3px 2px;
-  }
-}
+.diff-line-added { background-color: #e6ffed; }
+.diff-line-removed { background-color: #fff1f0; }
+.diff-line-empty { background-color: #fafafa; }
+.diff-line-unchanged { background-color: #fff; }
 </style>

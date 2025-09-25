@@ -309,10 +309,6 @@ declare namespace API {
     appId?: number
   }
 
-  type updateMyAvatarParams = {
-    id: number
-  }
-
   type User = {
     id?: number
     userAccount?: string

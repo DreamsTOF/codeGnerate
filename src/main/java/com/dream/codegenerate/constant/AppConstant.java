@@ -29,8 +29,4 @@ public interface AppConstant {
 
     Set<String> EXCLUDED_FOLDERS = Set.of("node_modules", ".git", "dist", "build");
 
-    /**
-     * 应用部署域名
-     */
-    String CODE_DEPLOY_HOST = "http://localhost";
 }

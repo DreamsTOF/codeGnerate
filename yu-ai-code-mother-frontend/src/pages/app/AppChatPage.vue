@@ -45,7 +45,7 @@
     <!-- 主要内容区域 -->
     <div class="main-content">
       <!-- 左侧对话区域 -->
-      <div class="chat-section">
+      <div class="chat-section" :style="{ width: chatPanelWidth + '%' }">
         <!-- 消息区域 -->
         <div class="messages-container" ref="messagesContainer">
           <!-- 加载更多按钮 -->
@@ -66,7 +66,6 @@
                 <a-avatar :src="aiAvatar" />
               </div>
               <div class="message-content">
-                <!-- 【关键修改 1】：直接绑定 message.content -->
                 <MarkdownRenderer v-if="message.content" :content="message.content" />
                 <div v-if="message.loading" class="loading-indicator">
                   <a-spin size="small" />
@@ -137,24 +136,34 @@
               @keydown.enter.prevent="sendMessage"
               :disabled="isGenerating"
             />
+            <!-- 【关键修改 1】：将发送按钮替换为“发送”和“停止”两个状态 -->
             <div class="input-actions">
               <a-button
+                v-if="!isGenerating"
                 type="primary"
                 @click="sendMessage"
-                :loading="isGenerating"
                 :disabled="!isOwner"
               >
                 <template #icon>
                   <SendOutlined />
                 </template>
               </a-button>
+              <a-button v-else type="danger" @click="stopGeneration">
+                <template #icon>
+                  <StopOutlined />
+                </template>
+                停止生成
+              </a-button>
             </div>
           </div>
         </div>
       </div>
 
+      <!-- 分隔条 1 -->
+      <div class="resizer resizer-left" @mousedown="startResize('left')"></div>
+
       <!-- 右侧展示区域 -->
-      <div class="preview-section">
+      <div class="preview-section" :style="{ width: previewPanelWidth + '%' }">
         <div class="preview-header">
           <!-- 视图切换按钮 -->
           <a-radio-group v-model:value="activeView" button-style="solid" size="small">
@@ -203,8 +212,11 @@
         </div>
       </div>
 
+      <!-- 分隔条 2 -->
+      <div class="resizer resizer-right" @mousedown="startResize('right')"></div>
+
       <!-- 右侧版本列表 -->
-      <div class="version-section">
+      <div class="version-section" :style="{ width: versionPanelWidth + '%' }">
         <VersionSidebar
           :app-id="appId"
           @select-version="handleSelectVersion"
@@ -263,7 +275,9 @@ import {
   SaveOutlined,
   EyeOutlined,
   CodeOutlined,
-}  from '@ant-design/icons-vue';
+  // 【关键修改 2】：导入 StopOutlined 图标
+  StopOutlined,
+} from '@ant-design/icons-vue';
 import { startChatStream, type ChatStreamCallbacks } from '@/utils/chatStreamHandler.ts';
 import { save } from '@/api/appVersionController';
 
@@ -280,7 +294,6 @@ const appInfo = ref<API.AppVO>();
 const appId = ref<any>();
 const savingVersion = ref(false);
 
-// 【关键修改 2】：简化 Message 接口, 移除 toolInfo
 interface Message {
   id?: number;
   type: 'user' | 'ai';
@@ -293,6 +306,9 @@ const messages = ref<Message[]>([]);
 const userInput = ref('');
 const isGenerating = ref(false);
 const messagesContainer = ref<HTMLElement>();
+
+// 【关键修改 3】：创建 ref 来存储 EventSource 实例
+const eventSource = ref<EventSource | null>(null);
 
 // 对话历史相关
 const loadingHistory = ref(false);
@@ -321,6 +337,17 @@ const visualEditor = new VisualEditor({
   },
 });
 
+// 面板宽度管理
+const chatPanelWidth = ref(33);
+const previewPanelWidth = ref(57);
+const versionPanelWidth = ref(20);
+
+// 拖拽相关状态
+const isResizing = ref(false);
+const currentResizer = ref<'left' | 'right' | null>(null);
+const startX = ref(0);
+const startWidths = ref({ chat: 0, preview: 0, version: 0 });
+
 // 权限相关
 const isOwner = computed(() => {
   return appInfo.value?.userId === loginUserStore.loginUser.id;
@@ -343,6 +370,53 @@ const handleRestoreVersion = (version: any) => {
   setTimeout(() => {
     fetchAppInfo();
   }, 1000);
+};
+
+// 面板拖拽功能
+const startResize = (resizer: 'left' | 'right') => {
+  isResizing.value = true;
+  currentResizer.value = resizer;
+  startX.value = (event as MouseEvent).clientX;
+  startWidths.value = {
+    chat: chatPanelWidth.value,
+    preview: previewPanelWidth.value,
+    version: versionPanelWidth.value,
+  };
+  document.addEventListener('mousemove', handleResize);
+  document.addEventListener('mouseup', stopResize);
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+};
+
+const handleResize = (e: MouseEvent) => {
+  if (!isResizing.value) return;
+
+  const deltaX = e.clientX - startX.value;
+  const containerWidth = document.querySelector('.main-content')?.clientWidth || 0;
+  const deltaPercent = (deltaX / containerWidth) * 100;
+
+  if (currentResizer.value === 'left') {
+    const newChatWidth = Math.max(15, Math.min(66.67, startWidths.value.chat + deltaPercent));
+    const newPreviewWidth = Math.max(15, Math.min(66.67, startWidths.value.preview - deltaPercent));
+
+    chatPanelWidth.value = newChatWidth;
+    previewPanelWidth.value = newPreviewWidth;
+  } else if (currentResizer.value === 'right') {
+    const newPreviewWidth = Math.max(15, Math.min(66.67, startWidths.value.preview + deltaPercent));
+    const newVersionWidth = Math.max(15, Math.min(66.67, startWidths.value.version - deltaPercent));
+
+    previewPanelWidth.value = newPreviewWidth;
+    versionPanelWidth.value = newVersionWidth;
+  }
+};
+
+const stopResize = () => {
+  isResizing.value = false;
+  currentResizer.value = null;
+  document.removeEventListener('mousemove', handleResize);
+  document.removeEventListener('mouseup', stopResize);
+  document.body.style.cursor = '';
+  document.body.style.userSelect = '';
 };
 
 const showAppDetail = () => {
@@ -488,9 +562,26 @@ const sendMessage = async () => {
   await generateCode(messageContent, aiMessageIndex);
 };
 
-// 【关键修改 3】：重写 generateCode 函数，统一处理所有事件为文本流
-const generateCode = async (userMessage: string, aiMessageIndex: number) => {
+// 【关键修改 4】：添加停止生成的方法
+const stopGeneration = () => {
+  if (eventSource.value) {
+    eventSource.value.close();
+    eventSource.value = null;
+  }
+  isGenerating.value = false;
+  // 找到最后一条AI消息并更新其状态
+  const lastMessage = messages.value[messages.value.length - 1];
+  if (lastMessage && lastMessage.type === 'ai' && lastMessage.loading) {
+    lastMessage.loading = false;
+    // 如果没有内容，可以提示用户已中断
+    if (!lastMessage.content) {
+      lastMessage.content = '（已手动中断）';
+    }
+  }
+  message.info('已停止生成');
+};
 
+const generateCode = async (userMessage: string, aiMessageIndex: number) => {
   const appendContent = (text: string) => {
     if (text) {
       messages.value[aiMessageIndex].content += text;
@@ -502,21 +593,14 @@ const generateCode = async (userMessage: string, aiMessageIndex: number) => {
     onAiResponse: (chunk: string) => {
       appendContent(chunk);
     },
-    // --- 主要修改在这里 ---
-    onToolRequest: (data: any) =>
-    {
+    onToolRequest: (data: any) => {},
+    onToolStream: (chunk: string) => {},
+    onToolExecuted: (data: any) => {},
 
-    },
-    // --- 修改结束 ---
-    onToolStream: (chunk: string) => {
-
-    },
-    onToolExecuted: (data: any) => {
-
-    },
     onDone: () => {
       isGenerating.value = false;
       messages.value[aiMessageIndex].loading = false;
+      eventSource.value = null; // 【关键修改 5】：请求结束后清空实例
       setTimeout(() => {
         updatePreview();
       }, 1000);
@@ -524,18 +608,25 @@ const generateCode = async (userMessage: string, aiMessageIndex: number) => {
     onError: (error: any) => {
       console.error('流式请求错误:', error);
       const errorMessage = error.message || '生成过程中出现错误';
-      messages.value[aiMessageIndex].content = `❌ ${errorMessage}`;
+      // 在已有内容后追加错误信息，而不是完全替换
+      messages.value[aiMessageIndex].content += `\n\n❌ **出错了**: ${errorMessage}`;
       messages.value[aiMessageIndex].loading = false;
       message.error(errorMessage);
       isGenerating.value = false;
+      eventSource.value = null; // 【关键修改 6】：请求异常时也要清空实例，以便恢复
     },
     onFirstChunk: () => {
       messages.value[aiMessageIndex].loading = false;
-    }
+    },
   };
 
   try {
-    startChatStream({ appId: appId.value || '', userMessage: userMessage }, callbacks);
+    // 【关键修改 7】：捕获 startChatStream 返回的 EventSource 实例
+    // 注意：这要求你的 startChatStream 工具函数返回它创建的 EventSource 实例
+    eventSource.value = startChatStream(
+      { appId: appId.value || '', userMessage: userMessage },
+      callbacks
+    );
   } catch (error) {
     console.error('启动流式请求失败:', error);
     handleError(error, aiMessageIndex);
@@ -548,6 +639,10 @@ const handleError = (error: unknown, aiMessageIndex: number) => {
   messages.value[aiMessageIndex].loading = false;
   message.error('生成失败，请重试');
   isGenerating.value = false;
+  if (eventSource.value) {
+    eventSource.value.close();
+    eventSource.value = null;
+  }
 };
 
 // 更新预览
@@ -557,7 +652,6 @@ const updatePreview = () => {
     const timestamp = new Date().getTime();
     const newPreviewUrl = `${getStaticPreviewUrl(codeGenType, appId.value)}?t=${timestamp}`;
 
-    // 强制iframe重新加载
     previewUrl.value = newPreviewUrl;
     previewReady.value = true;
   }
@@ -728,7 +822,10 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  // EventSource will be cleaned up automatically by startChatStream handler
+  // 组件卸载时，确保关闭任何活动的SSE连接
+  if (eventSource.value) {
+    eventSource.value.close();
+  }
 });
 </script>
 
@@ -779,27 +876,97 @@ onUnmounted(() => {
 .main-content {
   flex: 1;
   display: flex;
-  gap: 16px;
+  align-items: stretch;
+  gap: 0;
   padding: 8px;
   min-height: 0;
 }
 
 /* 左侧对话区域 */
 .chat-section {
-  flex: 2;
   display: flex;
   flex-direction: column;
   background: white;
-  border-radius: 8px;
+  border-radius: 8px 0 0 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  min-width: 200px;
+  max-width: 66.67%;
 }
 
 .messages-container {
-  flex: 0.9;
+  flex: 1;
   padding: 16px;
   overflow-y: auto;
   scroll-behavior: smooth;
+  min-height: 0;
+}
+
+/* 分隔条样式 */
+.resizer {
+  width: 4px;
+  background: #e0e0e0;
+  cursor: col-resize;
+  position: relative;
+  transition: background-color 0.2s ease;
+  z-index: 10;
+  flex-shrink: 0;
+}
+
+.resizer:hover {
+  background: #1890ff;
+}
+
+.resizer::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 12px;
+  height: 40px;
+  background: rgba(24, 144, 255, 0.1);
+  border-radius: 6px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.resizer:hover::before {
+  opacity: 1;
+}
+
+.resizer-left {
+  border-radius: 2px 0 0 2px;
+}
+
+.resizer-right {
+  border-radius: 0 2px 2px 0;
+}
+
+/* 右侧预览区域 */
+.preview-section {
+  display: flex;
+  flex-direction: column;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  min-width: 200px;
+  max-width: 66.67%;
+  flex-shrink: 0;
+}
+
+/* 右侧版本列表区域 */
+.version-section {
+  display: flex;
+  flex-direction: column;
+  background: white;
+  border-radius: 0 8px 8px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  min-width: 100px;
+  max-width: 66.67%;
+  min-height: 0;
+  flex-shrink: 0;
 }
 
 .message-item {
@@ -836,7 +1003,6 @@ onUnmounted(() => {
 .ai-message .message-content {
   background: #1a1a1a;
   color: #333;
-  padding: 8px 12px;
 }
 
 .message-avatar {
@@ -878,28 +1044,6 @@ onUnmounted(() => {
   right: 8px;
 }
 
-/* 右侧预览区域 */
-.preview-section {
-  flex: 3;
-  display: flex;
-  flex-direction: column;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-}
-
-/* 右侧版本列表区域 */
-.version-section {
-  width: 320px;
-  display: flex;
-  flex-direction: column;
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  min-height: 0;
-}
 
 .preview-header {
   display: flex;
@@ -930,17 +1074,20 @@ onUnmounted(() => {
 @media (max-width: 1024px) {
   .main-content {
     flex-direction: column;
+    gap: 8px;
   }
 
   .chat-section,
-  .preview-section {
-    flex: none;
-    height: 45vh;
+  .preview-section,
+  .version-section {
+    max-width: 100%;
+    width: 100% !important;
+    min-height: 300px;
+    border-radius: 8px;
   }
 
-  .version-section {
-    width: 100%;
-    height: 200px;
+  .resizer {
+    display: none;
   }
 }
 
@@ -956,6 +1103,12 @@ onUnmounted(() => {
   .main-content {
     padding: 8px;
     gap: 8px;
+  }
+
+  .chat-section,
+  .preview-section,
+  .version-section {
+    min-height: 250px;
   }
 
   .message-content {

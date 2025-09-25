@@ -223,7 +223,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
         // 4. 生成在 COS 中的唯一 Key，推荐带有业务路径和用户标识
         // 格式：avatar/{userId}/{uuid}.{suffix}
-        String key = String.format("avatar/%d/%s.%s",
+        String key = String.format("/avatar/%d/%s.%s",
                 user.getId(),
                 UUID.randomUUID().toString().substring(0, 8),
                 suffix);

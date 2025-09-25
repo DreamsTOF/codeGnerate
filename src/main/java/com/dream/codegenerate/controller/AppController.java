@@ -3,6 +3,7 @@ package com.dream.codegenerate.controller;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.dream.codegenerate.utils.ReactiveHeartbeatUtils;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.dream.codegenerate.annotation.AuthCheck;
@@ -40,7 +41,7 @@ import java.util.Map;
 
 /**
  * 应用 控制层。
- *
+ * <p>
  * dream
  */
 @RestController
@@ -68,21 +69,35 @@ public class AppController {
         User loginUser = userService.getLoginUser(request);
         // 调用服务生成代码（SSE 流式返回）
         Flux<ServerSentEvent<String>> contentFlux = appService.chatToGenCode(appId, message, loginUser);
-        return contentFlux
-                .map(event -> {
-                    Map<String, String> wrapper = Map.of("d", event.data());
-                    String jsonData = JSONUtil.toJsonStr(wrapper);
-                    return ServerSentEvent.<String>builder()
+        // 步骤 1: 先对原始数据流进行 map 转换
+        Flux<ServerSentEvent<String>> mappedFlux = contentFlux.map(event -> {
+            Map<String, String> wrapper = Map.of(
+                    "d"
+                    , event.data());
+            String jsonData = JSONUtil.toJsonStr(wrapper);
+            return
+                    ServerSentEvent.<String>builder()
                             .data(jsonData)
                             .build();
-                })
-                .concatWith(Mono.just(
+        });
+
+// 步骤 2: 对转换后的流应用心跳机制
+        Flux<ServerSentEvent<String>> fluxWithHeartbeat = ReactiveHeartbeatUtils.withHeartbeat(mappedFlux);
+
+// 步骤 3: 在流的末尾追加 "done" 事件
+        return fluxWithHeartbeat
+
+        .concatWith(Mono.just(
                         // 发送结束事件
                         ServerSentEvent.<String>builder()
-                                .event("done")
-                                .data("")
-                                .build()
-                ));
+                                .event(
+                                        "done"
+                                )
+                                .data(
+                                        ""
+                                )
+                                .build()));
+
     }
 
     /**

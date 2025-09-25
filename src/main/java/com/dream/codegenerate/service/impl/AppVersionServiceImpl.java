@@ -32,6 +32,7 @@ import com.dream.codegenerate.service.AppService;
 import com.dream.codegenerate.service.AppVersionService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -39,20 +40,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.dream.codegenerate.constant.AppConstant.EXCLUDED_FOLDERS;
 import static com.dream.codegenerate.model.entity.table.AppVersionTableDef.APP_VERSION;
 import static com.mybatisflex.core.query.QueryMethods.ifNull;
 
@@ -76,6 +73,7 @@ public class AppVersionServiceImpl extends ServiceImpl<AppVersionMapper, AppVers
     @Resource
     private ScreenshotService screenshotService;
 
+    private final ExecutorService executorService = Executors.newVirtualThreadPerTaskExecutor();
 
 
     @Value("${server.port}")
@@ -87,7 +85,7 @@ public class AppVersionServiceImpl extends ServiceImpl<AppVersionMapper, AppVers
     @Override
     public Long createNewVersion(AppVersionSaveRequest appVersionSaveRequest, User loginUser) {
         Long appId = appVersionSaveRequest.getAppId();
-        checkAppPermission(appId, loginUser);
+        App app = checkAppPermission(appId, loginUser);
         // 1. 获取当前最新版本号
         QueryWrapper queryWrapper = QueryWrapper.create()
                 .select(APP_VERSION.VERSION, APP_VERSION.CHAT_HISTORY_ID)
@@ -118,8 +116,8 @@ public class AppVersionServiceImpl extends ServiceImpl<AppVersionMapper, AppVers
         if (latestVersion!=null&&latestVersion.getVersion() != null) {
             nextVersion = latestVersion.getVersion() + 1;
         }
-
         // 2. 构建新版本对象并保存
+
         AppVersion newAppVersion = AppVersion.builder()
                 .appId(appId)
                 .version(nextVersion)
@@ -130,11 +128,16 @@ public class AppVersionServiceImpl extends ServiceImpl<AppVersionMapper, AppVers
                 .build();
 
         boolean result = this.save(newAppVersion);
+
+
         if (!result || newAppVersion.getId() == null) {
             log.error("自动创建应用版本失败, appId: {}", appId);
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "创建版本失败");
         }
         Long newVersionId = newAppVersion.getId();
+        app.setCurrentVersion(newVersionId);
+        appService.updateById(app);
+
         log.info("成功为应用 {} 创建新版本 V{} (ID: {})，即将开始生成封面...", appId, nextVersion, newVersionId);
 
 
@@ -242,36 +245,109 @@ public class AppVersionServiceImpl extends ServiceImpl<AppVersionMapper, AppVers
 
         // 2. 获取应用信息，得到项目根路径
         AppVersion appVersion = this.getById(id);
-        String projectRootPath = app.getCodeGenType() +"_"+ appId;
+        ThrowUtils.throwIf(Objects.equals(appVersion.getId(), app.getCurrentVersion()), ErrorCode.PARAMS_ERROR, "不能回滚当前版本");
+        // 假设 AppConstant.CODE_OUTPUT_ROOT_DIR = "D:/codegenerate/yu-ai-code-mother/tmp";
+        String subDirName = app.getCodeGenType() + "_" + appId;
+
+// 使用 Paths.get() 来安全地构建路径
+        Path projectRootPathObj = Paths.get(AppConstant.CODE_OUTPUT_ROOT_DIR, subDirName);
+        String projectRootPath = projectRootPathObj.toString();
 
         // 3. 查询要恢复的版本信息
         String codeContentJson = appVersion.getContent();
         ThrowUtils.throwIf(codeContentJson == null || codeContentJson.isEmpty(), ErrorCode.SYSTEM_ERROR, "版本内容为空，无法恢复");
-
         log.info("开始恢复应用 {} 到版本 {}", appId, id);
 
-        try {
-            // 4. 【核心】清空项目目录（会智能跳过排除的文件夹）
-            log.info("正在清空项目目录: {}", projectRootPath);
-            clearProjectDirectory(projectRootPath);
-            log.info("项目目录清空完成");
+        Path projectRoot = Paths.get(projectRootPath).toAbsolutePath();
+        Path stagingPath;
+        String stagingDirName = "staging-" + System.currentTimeMillis();
 
-            // 5. 【核心】将版本内容解压并写回文件系统
-            log.info("正在写入版本 {} 的文件内容", id);
-            writeJsonToProject(codeContentJson, projectRootPath);
-            log.info("文件内容写入完成");
+        // 1. 在项目根目录 *内部* 创建一个唯一的临时“暂存”目录
+
+        try {
+            stagingPath = projectRoot.resolve(stagingDirName);
+            Files.createDirectories(stagingPath);
+            log.info("已在项目内部创建临时暂存目录: {}", stagingPath);
 
         } catch (IOException e) {
-            log.error("版本恢复期间发生IO异常", e);
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "版本恢复失败，文件操作错误");
-        } catch (Exception e) {
-            log.error("版本恢复期间发生未知异常", e);
-            // 可以根据需要决定是否重新抛出为自定义异常
-            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "版本恢复失败，发生未知错误");
+            log.error("无法创建临时暂存目录", e);
+            return false;
         }
 
+        try {
+            // 为本次清理操作创建一个包含暂存目录的动态排除列表
+            Set<String> currentExclusions = new HashSet<>(EXCLUDED_FOLDERS);
+            currentExclusions.add(stagingDirName);
+            // 2. 【异步任务A】将新版本的内容写入临时暂存目录
+            CompletableFuture<Void> writeFuture = CompletableFuture.runAsync(() -> {
+                try {
+                    log.info("开始异步写入版本 {} 的文件到暂存目录", id);
+                    writeJsonToProject(codeContentJson, stagingPath.toString());
+                    log.info("暂存目录写入完成");
+                } catch (IOException e) {
+                    throw new CompletionException("写入暂存目录失败", e);
+                }
+            }, executorService);
+
+            // 3. 【异步任务B】清空当前线上的项目目录
+            CompletableFuture<Void> clearFuture = CompletableFuture.runAsync(() -> {
+                try {
+                    log.info("开始异步清空项目目录 (排除 {})", currentExclusions);
+                    clearProjectDirectory(projectRoot.toString(), currentExclusions);
+                    log.info("项目目录清空完成");
+                } catch (IOException e) {
+                    throw new CompletionException("清空项目目录失败", e);
+                }
+            }, executorService);
+
+            // 4. 等待两个异步任务都完成
+            log.info("等待写入和清空操作完成...");
+            CompletableFuture.allOf(writeFuture, clearFuture).join();
+            log.info("写入和清空操作均已完成");
+
+            // 5. 【核心切换】将暂存目录的所有内容移动到项目目录
+            log.info("正在将文件从暂存目录移动到项目目录...");
+            moveContents(stagingPath, projectRoot);
+            log.info("文件移动完成，版本切换成功");
+
+        } catch (CompletionException e) {
+            log.error("版本恢复期间，异步操作发生异常", e.getCause());
+             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "版本恢复失败：" + e.getCause().getMessage());
+
+        } catch (IOException e) {
+            log.error("版本恢复期间，移动文件时发生IO异常", e);
+             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "版本恢复失败，文件操作错误");
+
+        } catch (Exception e) {
+            log.error("版本恢复期间发生未知异常", e);
+             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "版本恢复失败，发生未知错误");
+
+        } finally {
+            // 6. 【重要】无论成功与否，都必须尝试清理临时暂存目录
+            try {
+                log.info("正在清理暂存目录: {}", stagingPath);
+                if (Files.exists(stagingPath)) {
+                    try (Stream<Path> walk = Files.walk(stagingPath)) {
+                        walk.sorted(Comparator.reverseOrder())
+                                .forEach(path -> {
+                                    try {
+                                        Files.delete(path);
+                                    } catch (IOException ex) {
+                                        log.error("清理暂存文件失败: {}", path, ex);
+                                    }
+                                });
+                    }
+                }
+                log.info("暂存目录清理完成");
+            } catch (IOException e) {
+                log.error("无法清理暂存目录: {}", stagingPath, e);
+            }
+        }
+        app.setCurrentVersion( id);
+        appService.updateById(app);
         log.info("成功恢复应用 {} 到版本 {}", appId, id);
         return true;
+
     }
     @Override
     public AppVersionVO getAppVersionVOById(long id, User loginUser) {
@@ -287,26 +363,26 @@ public class AppVersionServiceImpl extends ServiceImpl<AppVersionMapper, AppVers
     @Override
     public AppVersionCompareVO compare(AppVersionCompareRequest appVersionCompareRequest, User loginUser) {
         Long appId = appVersionCompareRequest.getAppId();
-        Integer fromVersionNum = appVersionCompareRequest.getFromVersion();
-        Integer toVersionNum = appVersionCompareRequest.getToVersion();
+        Integer fromVersionId = appVersionCompareRequest.getFromVersion();
+        Integer toVersionId = appVersionCompareRequest.getToVersion();
 
         // 1. 参数校验
         ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用ID错误");
-        ThrowUtils.throwIf(fromVersionNum == null || fromVersionNum <= 0, ErrorCode.PARAMS_ERROR, "起始版本号错误");
-        ThrowUtils.throwIf(toVersionNum == null || toVersionNum <= 0, ErrorCode.PARAMS_ERROR, "目标版本号错误");
-        ThrowUtils.throwIf(fromVersionNum.equals(toVersionNum), ErrorCode.PARAMS_ERROR, "不能对比相同版本");
+        ThrowUtils.throwIf(fromVersionId == null || fromVersionId <= 0, ErrorCode.PARAMS_ERROR, "起始版本号错误");
+        ThrowUtils.throwIf(toVersionId == null || toVersionId <= 0, ErrorCode.PARAMS_ERROR, "目标版本号错误");
+        ThrowUtils.throwIf(fromVersionId.equals(toVersionId), ErrorCode.PARAMS_ERROR, "不能对比相同版本");
 
         // 2. 权限校验
         checkAppPermission(appId, loginUser);
 
         // 3. 查询两个版本的完整信息
         AppVersion fromVersion = getOne(
-                QueryWrapper.create().where(APP_VERSION.APP_ID.eq(appId)).and(APP_VERSION.VERSION.eq(fromVersionNum))
+                QueryWrapper.create().where(APP_VERSION.APP_ID.eq(appId)).and(APP_VERSION.ID.eq(fromVersionId))
         );
         ThrowUtils.throwIf(fromVersion == null, ErrorCode.NOT_FOUND_ERROR, "起始版本不存在");
 
         AppVersion toVersion = getOne(
-                QueryWrapper.create().where(APP_VERSION.APP_ID.eq(appId)).and(APP_VERSION.VERSION.eq(toVersionNum))
+                QueryWrapper.create().where(APP_VERSION.APP_ID.eq(appId)).and(APP_VERSION.ID.eq(toVersionId))
         );
         ThrowUtils.throwIf(toVersion == null, ErrorCode.NOT_FOUND_ERROR, "目标版本不存在");
 
@@ -366,7 +442,7 @@ public class AppVersionServiceImpl extends ServiceImpl<AppVersionMapper, AppVers
                             // 检查文件路径是否在排除目录中
                             Path relativePath = root.relativize(path);
                             for (int i = 0; i < relativePath.getNameCount(); i++) {
-                                if (AppConstant.EXCLUDED_FOLDERS.contains(relativePath.getName(i).toString())) {
+                                if (EXCLUDED_FOLDERS.contains(relativePath.getName(i).toString())) {
                                     return false; // 排除该文件
                                 }
                             }
@@ -410,84 +486,87 @@ public class AppVersionServiceImpl extends ServiceImpl<AppVersionMapper, AppVers
     }
 
 
-    /**
-     * 清理项目目录下的所有内容，但会跳过 AppConstant.EXCLUDED_FOLDERS 中定义的排除目录。
-     *
-     * @param projectRootPath 项目的绝对路径
-     * @throws IOException 如果发生I/O错误
-     */
-    private void clearProjectDirectory(String projectRootPath) throws IOException {
-        Path root = Paths.get(projectRootPath);
-        if (!Files.exists(root) || !Files.isDirectory(root)) {
-            log.warn("项目目录不存在或不是一个目录，无需清理: {}", projectRootPath);
-            // 目录不存在，可以直接返回，后续写入时会自动创建
-            return;
-        }
 
-        // 使用Files.walk遍历所有文件和目录
-        try (Stream<Path> walk = Files.walk(root)) {
-            walk.sorted(Comparator.reverseOrder()) // 逆序删除，保证先删除文件再删除空目录
-                    .filter(path -> !path.equals(root)) // 避免删除根目录本身
-                    .filter(path -> {
-                        // 检查路径的任何部分是否匹配排除列表
-                        Path relativePath = root.relativize(path);
-                        for (Path part : relativePath) {
-                            if (AppConstant.EXCLUDED_FOLDERS.contains(part.toString())) {
-                                log.debug("跳过受保护的路径: {}", path);
-                                return false; // 如果是受保护的路径，则过滤掉，不进行删除
-                            }
-                        }
-                        return true; // 否则，保留以进行删除
-                    })
-                    .forEach(path -> {
+    /**
+     * 将源目录的所有内容移动到目标目录。
+     */
+    private void moveContents(Path source, Path target) throws IOException {
+        try (Stream<Path> stream = Files.walk(source)) {
+            stream.filter(path -> !path.equals(source))
+                    .forEach(sourcePath -> {
+                        Path targetPath = target.resolve(source.relativize(sourcePath));
                         try {
-                            Files.delete(path);
-                            log.debug("已删除: {}", path);
+                            Files.move(sourcePath, targetPath, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+                            log.debug("已移动: {} -> {}", sourcePath, targetPath);
                         } catch (IOException e) {
-                            // 此处可以记录一个更详细的错误，但在逆序删除中，
-                            // 目录非空等问题通常不会发生。
-                            log.error("删除文件/夹失败: {}", path, e);
+                            throw new UncheckedIOException(e);
                         }
                     });
+        } catch (UncheckedIOException e) {
+            throw e.getCause();
         }
     }
 
     /**
-     * 将包含文件内容的JSON字符串解析并写入到项目目录中
-     *
-     * @param jsonContent     文件内容的JSON字符串
-     * @param projectRootPath 项目根目录
-     * @throws IOException 如果发生I/O错误
+     * 清理项目目录下的所有内容。
+     */
+    private void clearProjectDirectory(String projectRootPath, Set<String> exclusions) throws IOException {
+        File rootDir = new File(projectRootPath);
+        if (!rootDir.exists() || !rootDir.isDirectory()) {
+            log.warn("项目目录不存在或不是一个目录，无需清理: {}", projectRootPath);
+            return;
+        }
+
+        File[] files = rootDir.listFiles();
+        if (files == null) {
+            log.warn("无法列出目录内容，可能存在权限问题: {}", projectRootPath);
+            return;
+        }
+
+        for (File file : files) {
+            if (exclusions.contains(file.getName())) {
+                log.debug("跳过受保护的路径: {}", file.getAbsolutePath());
+                continue;
+            }
+
+            log.debug("正在删除: {}", file.getAbsolutePath());
+            if (file.isDirectory()) {
+                FileUtils.deleteDirectory(file);
+            } else {
+                Files.delete(file.toPath());
+            }
+
+            // 【增加验证步骤】检查文件/目录是否真的被删除了
+            if (Files.exists(file.toPath())) {
+                // 如果还存在，就主动抛出异常，让失败暴露出来
+                throw new IOException("验证删除失败，文件或目录依然存在: " + file.getAbsolutePath());
+            }
+            log.debug("已确认删除: {}", file.getAbsolutePath());
+        }
+    }
+    /**
+     * 将包含文件内容的JSON字符串解析并写入到项目目录中。
      */
     private void writeJsonToProject(String jsonContent, String projectRootPath) throws IOException {
-        // 使用 Hutool JSON 工具反序列化为 Map<String, String>
-        // Key: 相对路径, Value: 文件内容
-        Map<String, String> fileContents = JSONUtil.toBean(jsonContent, new TypeReference<Map<String, String>>() {
-        }, false);
+        // 这里的 Map.of 是一个示例，请替换为您项目中实际使用的JSON解析库
+         Map<String, String> fileContents = JSONUtil.toBean(jsonContent, new TypeReference<Map<String, String>>() {}, false);
+
 
         if (fileContents == null || fileContents.isEmpty()) {
             log.warn("版本内容数据为空，没有文件需要写入。");
             return;
         }
 
-        // 遍历Map，逐个创建文件并写入内容
         for (Map.Entry<String, String> entry : fileContents.entrySet()) {
-            String relativePathStr = entry.getKey();
-            String content = entry.getValue();
-
-            Path filePath = Paths.get(projectRootPath, relativePathStr);
-
-            // 确保父级目录存在，如果不存在则自动创建
+            Path filePath = Paths.get(projectRootPath, entry.getKey());
             Path parentDir = filePath.getParent();
             if (parentDir != null && !Files.exists(parentDir)) {
                 Files.createDirectories(parentDir);
-                log.debug("已创建目录: {}", parentDir);
             }
-
-            // 将内容写入文件，如果文件已存在则覆盖
-            Files.writeString(filePath, content, StandardCharsets.UTF_8,
+            Files.writeString(filePath, entry.getValue(), StandardCharsets.UTF_8,
                     StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-            log.debug("已写入文件: {}", filePath);
         }
     }
+
+
 }

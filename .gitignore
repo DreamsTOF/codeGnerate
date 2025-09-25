@@ -1,6 +1,7 @@
 ### CUSTOM ###
 application-local.yml
 application-prod.yml
+application-test.yml
 tmp
 
 HELP.md
@@ -24,6 +25,7 @@ target/
 *.iml
 *.ipr
 *.local
+*.yml
 
 ### NetBeans ###
 /nbproject/private/

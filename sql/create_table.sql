@@ -84,3 +84,5 @@ CREATE TABLE `app_version`
 
 ALTER TABLE `app_version`
     ADD COLUMN `cover` varchar(512) NULL COMMENT '版本封面截图URL' AFTER `message`;
+ALTER TABLE `app`
+    ADD COLUMN `currentVersion` int NULL COMMENT '当前应用版本' ;

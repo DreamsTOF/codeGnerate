@@ -6,19 +6,17 @@ import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.http.client.JdkHttpClientBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
 
 import java.time.Duration;
 
-/**
- * 流式对话模型配置
- */
 @Configuration
-@ConfigurationProperties(prefix = "langchain4j.open-ai.streaming-chat-model")
+@ConfigurationProperties(prefix = "langchain4j.open-ai.reasoning-streaming-chat-model")
 @Data
-public class StreamingChatModelConfig {
+public class ttdChatModelConfig {
 
     private String baseUrl;
 
@@ -30,37 +28,18 @@ public class StreamingChatModelConfig {
 
     private Double temperature;
 
-    private boolean logRequests;
+    private Boolean logRequests = false;
 
-    private boolean logResponses;
-
-    /**
-     * 流式模型
-     */
-//    @Bean
-//    @Scope("prototype")
-//    public StreamingChatModel streamingChatModelPrototype() {
-//        return OpenAiStreamingChatModel.builder()
-//                .timeout(Duration.ofMinutes(5))
-//                .httpClientBuilder(new SpringRestClientBuilder())
-//                .apiKey(apiKey)
-//                .baseUrl(baseUrl)
-//                .modelName(modelName)
-//                .maxTokens(maxTokens)
-//                .temperature(temperature)
-//                .logRequests(logRequests)
-//                .logResponses(logResponses)
-//                .build();
-//    }
+    private Boolean logResponses = false;
 
     /**
-     * 流式模型
+     * 推理流式模型（用于 Vue 项目生成，带工具调用）
      */
     @Bean
     @Scope("prototype")
-    public StreamingChatModel streamingChatModelPrototype() {
+    public StreamingChatModel anthropicStreamingChatModelPrototype() {
         return AnthropicStreamingChatModel.builder()
-                .timeout(Duration.ofMinutes(5))
+                .timeout(Duration.ofMinutes(50))
                 .httpClientBuilder(new SpringRestClientBuilder())
                 .apiKey(apiKey)
                 .baseUrl(baseUrl)

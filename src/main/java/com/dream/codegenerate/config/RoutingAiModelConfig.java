@@ -1,5 +1,6 @@
 package com.dream.codegenerate.config;
 
+import dev.langchain4j.http.client.spring.restclient.SpringRestClientBuilder;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import lombok.Data;
@@ -38,6 +39,7 @@ public class RoutingAiModelConfig {
     public ChatModel routingChatModelPrototype() {
         return OpenAiChatModel.builder()
                 .apiKey(apiKey)
+                .httpClientBuilder(new SpringRestClientBuilder())
                 .modelName(modelName)
                 .baseUrl(baseUrl)
                 .maxTokens(maxTokens)
