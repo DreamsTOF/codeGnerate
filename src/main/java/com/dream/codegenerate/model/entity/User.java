@@ -18,13 +18,13 @@ import lombok.NoArgsConstructor;
 /**
  * 用户 实体类。
  *
- *  
+ *
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table("user")
+@Table(dataSource="mysql",value = "user")
 public class User implements Serializable {
 
     @Serial

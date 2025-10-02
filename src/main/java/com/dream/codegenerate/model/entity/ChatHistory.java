@@ -18,13 +18,13 @@ import lombok.NoArgsConstructor;
 /**
  * 对话历史 实体类。
  *
- *  
+ *
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table("chat_history")
+@Table(dataSource="mysql",value = "chat_history")
 public class ChatHistory implements Serializable {
 
     @Serial

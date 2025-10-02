@@ -3,7 +3,7 @@
     <div class="body">
       <div class="main-box">
         <!-- 注册表单 -->
-        <div :class="['container', 'container-register', { 'is-txl': !isLogin }]">
+        <div :class="['container', 'container-register', { 'is-z200': !isLogin }]">
           <form @submit.prevent="handleRegisterSubmit">
             <h2 class="title">注册</h2>
             <span class="subtitle">创建您的账户</span>
@@ -358,4 +358,3 @@ const handleRegisterSubmit = async () => {
   }
 }
 </style>
-

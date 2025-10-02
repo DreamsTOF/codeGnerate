@@ -4,9 +4,11 @@ import cn.hutool.core.util.RuntimeUtil;
 import com.dream.codegenerate.exception.ErrorCode;
 import com.dream.codegenerate.exception.ThrowUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -51,6 +53,19 @@ public class VueProjectBuilder {
             return false;
         }
         log.info("开始构建 Vue 项目：{}", projectPath);
+        // 删除 node_modules 目录
+        try {
+            File nodeModulesDir = new File(projectDir, "node_modules");
+            if (nodeModulesDir.exists() && nodeModulesDir.isDirectory()) {
+                log.info("发现已存在的 node_modules 目录，开始删除：{}", nodeModulesDir.getAbsolutePath());
+                // 使用一个可靠的库来递归删除目录，这比执行 rm -rf 更安全
+                FileUtils.deleteDirectory(nodeModulesDir);
+                log.info("node_modules 目录删除成功。");
+            }
+        } catch (IOException e) {
+            log.error("删除 node_modules 目录失败：{}", projectPath, e);
+            return false;
+        }
         // 执行 npm install
         if (!executeNpmInstall(projectDir)) {
             log.error("npm install 执行失败：{}", projectPath);
@@ -87,7 +102,7 @@ public class VueProjectBuilder {
     private boolean executeNpmBuild(File projectDir) {
         log.info("执行 npm run build...");
         String command = String.format("%s run build", buildCommand("npm"));
-        return executeCommand(projectDir, command, 180); // 3分钟超时
+        return executeCommand(projectDir, command, 300); // 5分钟超时
     }
 
     /**

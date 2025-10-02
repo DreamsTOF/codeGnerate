@@ -26,7 +26,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table("app_version")
+@Table(dataSource="mysql",value = "app_version")
 public class AppVersion implements Serializable {
 
     @Serial

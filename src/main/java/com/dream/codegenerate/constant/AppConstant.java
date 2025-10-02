@@ -27,6 +27,6 @@ public interface AppConstant {
      */
     String CODE_DEPLOY_ROOT_DIR = System.getProperty("user.dir") + "/tmp/code_deploy";
 
-    Set<String> EXCLUDED_FOLDERS = Set.of("node_modules", ".git", "dist", "build");
-
+     Set<String> EXCLUDED_FOLDERS = Set.of("node_modules", ".git", "dist", "build");
+     Set<String> EXCLUDED_FILES = Set.of("package-lock.json");
 }

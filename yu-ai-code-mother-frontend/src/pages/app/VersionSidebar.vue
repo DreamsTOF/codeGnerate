@@ -166,7 +166,7 @@ import { list, compare, restore } from '@/api/appVersionController';
 // 假设的类型定义，实际项目中请从后端接口类型中导入
 
 interface Props {
-  appId: number;
+  appId: String;
   visible?: boolean;
 }
 

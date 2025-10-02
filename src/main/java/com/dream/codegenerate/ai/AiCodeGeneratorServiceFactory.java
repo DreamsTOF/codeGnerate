@@ -1,5 +1,6 @@
 package com.dream.codegenerate.ai;
 
+import com.dream.codegenerate.ai.memory.VectorChatMemoryStore;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.dream.codegenerate.ai.guardrail.PromptSafetyInputGuardrail;
@@ -44,6 +45,9 @@ public class AiCodeGeneratorServiceFactory {
 
     @Resource
     private RedisChatMemoryStore redisChatMemoryStore;
+
+    @Resource
+    private VectorChatMemoryStore vectorChatMemoryStore;
 
     @Resource
     private ChatHistoryService chatHistoryService;
@@ -140,7 +144,7 @@ public class AiCodeGeneratorServiceFactory {
         MessageWindowChatMemory chatMemory = MessageWindowChatMemory
                 .builder()
                 .id(appId)
-                .chatMemoryStore(redisChatMemoryStore)
+                .chatMemoryStore(vectorChatMemoryStore)
                 .maxMessages(20)
                 .build();
         // 从数据库中加载对话历史到记忆中
@@ -187,7 +191,7 @@ public class AiCodeGeneratorServiceFactory {
                     throw new BusinessException(ErrorCode.SYSTEM_ERROR, "不支持的代码生成类型: " + codeGenType.getValue());
         };
     }
-    /**
+     /**
      * 【推荐】根据 appId 和生成类型获取 AI 服务
      * 此方法会根据任务复杂度选择合适的模型，以优化成本。
      *
@@ -208,16 +212,19 @@ public class AiCodeGeneratorServiceFactory {
      * @return AiCodeGeneratorService 实例
      */
     private AiCodeGeneratorService createAiService(long appId, CodeGenTypeEnum codeGenType) {
+        if (appId==0){
+            appId=165456418;
+        }
         log.info("为 appId: {} 和类型: {} 创建 AI 服务实例", appId, codeGenType.getValue());
 
         // 1. 通用的内存管理
         MessageWindowChatMemory chatMemory = MessageWindowChatMemory
                 .builder()
                 .id(appId)
-                .chatMemoryStore(redisChatMemoryStore)
-                .maxMessages(100)
+                .chatMemoryStore(vectorChatMemoryStore)
+                .maxMessages(400)
                 .build();
-        chatHistoryService.loadChatHistoryToMemory(appId, chatMemory, 100);
+        chatHistoryService.loadChatHistoryToMemory(appId, chatMemory, 400);
 
         // 2. 根据任务类型选择不同的模型和 Prompt
         StreamingChatModel selectedModel;
@@ -245,16 +252,16 @@ public class AiCodeGeneratorServiceFactory {
 
         // 4. 构建统一的 AI 服务
         return AiServices.builder(AiCodeGeneratorService.class)
+//                .chatModel(chatModel)
                 .streamingChatModel(selectedModel) // <--- 使用动态选择的模型
                 .chatMemoryProvider(memoryId -> chatMemory)
-                .tools(toolManager.getAllTools())
+                .tools(toolManager.getTool("writeFile"), toolManager.getTool("readFile"))
                 .systemMessageProvider(chat -> systemPromptContent) // <--- 提供加载好的 Prompt 内容
                 .hallucinatedToolNameStrategy(toolExecutionRequest ->
                         ToolExecutionResultMessage.from(toolExecutionRequest,
                                 "Error: there is no tool called " + toolExecutionRequest.name())
                 )
-                .maxSequentialToolsInvocations(50)
-                .inputGuardrails(new PromptSafetyInputGuardrail())
+                .maxSequentialToolsInvocations(200)
                 .build();
     }
 

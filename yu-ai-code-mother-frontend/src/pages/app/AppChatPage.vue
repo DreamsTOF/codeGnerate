@@ -121,8 +121,8 @@
               <a-textarea
                 v-model:value="userInput"
                 :placeholder="getInputPlaceholder()"
-                :rows="4"
-                :maxlength="1000"
+                :rows="8"
+                :maxlength="8000"
                 @keydown.enter.prevent="sendMessage"
                 :disabled="isGenerating || !isOwner"
               />
@@ -131,8 +131,8 @@
               v-else
               v-model:value="userInput"
               :placeholder="getInputPlaceholder()"
-              :rows="4"
-              :maxlength="1000"
+              :rows="8"
+              :maxlength="8000"
               @keydown.enter.prevent="sendMessage"
               :disabled="isGenerating"
             />
@@ -263,7 +263,7 @@ import DeploySuccessModal from '@/components/DeploySuccessModal.vue';
 import VersionSidebar from './VersionSidebar.vue';
 import aiAvatar from '@/assets/aiAvatar.jpg';
 import { getStaticPreviewUrl } from '@/config/env';
-import { VisualEditor, type ElementInfo } from '@/utils/visualEditor';
+import { VisualEditor, type ElementInfo } from '@/utils/visualEditor.ts';
 
 import {
   CloudUploadOutlined,
@@ -835,7 +835,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   padding: 16px;
-  background: #f5f5f5;
+  background: #fdfdfd;
 }
 
 /* 顶部栏 */

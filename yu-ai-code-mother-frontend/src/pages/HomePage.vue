@@ -13,7 +13,7 @@
           v-model:value="userPrompt"
           placeholder="创建一个简单的网页"
           :rows="4"
-          :maxlength="1000"
+          :maxlength="2000"
           class="prompt-input"
         />
         <div class="input-actions">

@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table("app")
+@Table(dataSource="mysql",value = "app")
 public class App implements Serializable {
 
     @Serial

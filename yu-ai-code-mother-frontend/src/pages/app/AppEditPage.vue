@@ -53,7 +53,7 @@
               v-model:value="formData.initPrompt"
               placeholder="请输入初始提示词"
               :rows="4"
-              :maxlength="1000"
+              :maxlength="2000"
               show-count
               disabled
             />
