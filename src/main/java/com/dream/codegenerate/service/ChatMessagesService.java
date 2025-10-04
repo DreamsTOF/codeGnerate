@@ -18,9 +18,11 @@ public interface ChatMessagesService extends IService<ChatMessagesEntity> {
 
     List<ChatMessage> getMessages(String memoryId);
 
+//    List<ChatMessage> loadChatHistory(long appId, UserMessage userMessage, int maxVectorResults);
+
+    List<ChatMessage> loadChatHistory(long appId, UserMessage userMessage, int maxVectorResults);
+
     void updateMessages(Object memoryId, List<ChatMessage> messages);
 
     void deleteMessages(Object memoryId);
-
-    int loadChatHistoryToMemory(long appId, UserMessage userMessage, ChatMemory chatMemory, int i);
 }

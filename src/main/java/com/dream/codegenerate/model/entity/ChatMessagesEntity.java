@@ -1,5 +1,6 @@
 package com.dream.codegenerate.model.entity;
 
+import com.dream.codegenerate.manager.VectorTypeHandler;
 import com.dream.codegenerate.model.enums.MessageTypeEnum;
 import com.dream.codegenerate.manager.JsonbStringTypeHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -60,6 +61,7 @@ public class ChatMessagesEntity implements Serializable {
 
     private String toolName;
 
+    @Column(value = "embedding", typeHandler = VectorTypeHandler.class)
     private PGvector embedding;
 
     private OffsetDateTime createdAt;

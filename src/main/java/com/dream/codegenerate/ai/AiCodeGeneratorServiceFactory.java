@@ -13,6 +13,7 @@ import com.dream.codegenerate.model.enums.CodeGenTypeEnum;
 import com.dream.codegenerate.service.ChatHistoryService;
 import com.dream.codegenerate.utils.SpringContextUtil;
 import dev.langchain4j.community.store.memory.chat.redis.RedisChatMemoryStore;
+import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
@@ -30,6 +31,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.List;
 
 /**
  * AI 服务创建工厂
@@ -222,21 +224,21 @@ public class AiCodeGeneratorServiceFactory {
 //        MessageWindowChatMemory chatMemory = MessageWindowChatMemory
 //                .builder()
 //                .id(appId)
-////                .chatMemoryStore(vectorChatMemoryStore)
-//                .chatMemoryStore(redisChatMemoryStore)
+//                .chatMemoryStore(vectorChatMemoryStore)
+////                .chatMemoryStore(redisChatMemoryStore)
 //                .maxMessages(400)
 //                .build();
         StatefulChatMemory chatMemory = StatefulChatMemory.builder()
                 .id(appId)
                 .chatMemoryStore(vectorChatMemoryStore)
+                .messages(chatMessagesService.loadChatHistory(appId, userMessage, 1000))
                 .build();
 //        chatHistoryService.loadChatHistoryToMemory(appId, chatMemory, 1000);
-        chatMessagesService.loadChatHistoryToMemory(appId,userMessage , chatMemory, 1000);
+
 
         // 2. 根据任务类型选择不同的模型和 Prompt
         StreamingChatModel selectedModel;
         final String systemPromptContent;
-
         switch (codeGenType) {
             case VUE_PROJECT:
                 log.info("任务类型: {}, 选择【高级推理模型】", codeGenType.getValue());
