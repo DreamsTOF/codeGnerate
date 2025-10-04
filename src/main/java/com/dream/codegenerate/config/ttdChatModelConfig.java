@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Scope;
 import java.time.Duration;
 
 @Configuration
-@ConfigurationProperties(prefix = "langchain4j.open-ai.reasoning-streaming-chat-model")
+@ConfigurationProperties(prefix = "langchain4j.anthropic.reasoning-streaming-chat-model")
 @Data
 public class ttdChatModelConfig {
 
@@ -41,6 +41,7 @@ public class ttdChatModelConfig {
         return AnthropicStreamingChatModel.builder()
                 .timeout(Duration.ofMinutes(50))
                 .httpClientBuilder(new SpringRestClientBuilder())
+                .cacheSystemMessages( true)
                 .apiKey(apiKey)
                 .baseUrl(baseUrl)
                 .modelName(modelName)

@@ -6,6 +6,7 @@ import com.mybatisflex.core.service.IService;
 import com.dream.codegenerate.model.dto.chathistory.ChatHistoryQueryRequest;
 import com.dream.codegenerate.model.entity.ChatHistory;
 import com.dream.codegenerate.model.entity.User;
+import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 
 import java.time.LocalDateTime;
@@ -57,7 +58,7 @@ public interface ChatHistoryService extends IService<ChatHistory> {
      * @param maxCount 最多加载多少条
      * @return 加载成功的条数
      */
-    int loadChatHistoryToMemory(Long appId, MessageWindowChatMemory chatMemory, int maxCount);
+    int loadChatHistoryToMemory(Long appId, ChatMemory chatMemory, int maxCount);
 
     /**
      * 构造查询条件

@@ -1,4 +1,4 @@
-package com.dream.codegenerate.utils;
+package com.dream.codegenerate.manager;
 
 import org.apache.ibatis.type.BaseTypeHandler;
 import org.apache.ibatis.type.JdbcType;

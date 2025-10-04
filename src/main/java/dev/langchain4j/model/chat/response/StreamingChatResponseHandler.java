@@ -1,6 +1,5 @@
 package dev.langchain4j.model.chat.response;
 
-import dev.langchain4j.Experimental;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.model.chat.StreamingChatModel;
@@ -59,6 +58,4 @@ public interface StreamingChatResponseHandler {
      * @param error The error that occurred
      */
     void onError(Throwable error);
-
-
 }

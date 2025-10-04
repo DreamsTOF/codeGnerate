@@ -5,6 +5,7 @@ import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.util.ObjUtil;
 import cn.hutool.json.JSONUtil;
 import com.dream.codegenerate.constant.AppConstant;
+import com.dream.codegenerate.core.builder.BuildResult;
 import com.dream.codegenerate.core.builder.VueProjectBuilder;
 import com.dream.codegenerate.exception.BusinessException;
 import com.dream.codegenerate.model.dto.appVersion.AppVersionCompareRequest;
@@ -312,7 +313,8 @@ public class AppVersionServiceImpl extends ServiceImpl<AppVersionMapper, AppVers
             log.info("文件移动完成，版本切换成功");
             // 构建项目
             if(Objects.equals(app.getCodeGenType(), CodeGenTypeEnum.VUE_PROJECT.getValue())){
-                vueProjectBuilder.buildProjectAsync(projectRoot.toString());
+                CompletableFuture<BuildResult> buildResultCompletableFuture = vueProjectBuilder.buildProjectAsync(projectRoot.toString());
+
             }
 
         } catch (CompletionException e) {

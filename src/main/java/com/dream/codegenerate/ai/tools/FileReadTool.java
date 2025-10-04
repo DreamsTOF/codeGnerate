@@ -1,6 +1,8 @@
 package com.dream.codegenerate.ai.tools;
 
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.dream.codegenerate.ai.model.ToolResponse;
 import com.dream.codegenerate.constant.AppConstant;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -25,6 +27,8 @@ public class FileReadTool extends BaseTool {
     public String readFile(
             @P("文件的相对路径")
             String relativeFilePath,
+            @P("对本次操作的概要描述") // <-- 新增参数
+            String actionDescription,
             @ToolMemoryId Long appId
     ) {
         try {
@@ -37,7 +41,7 @@ public class FileReadTool extends BaseTool {
             if (!Files.exists(path) || !Files.isRegularFile(path)) {
                 return "错误：文件不存在或不是文件 - " + relativeFilePath;
             }
-            return Files.readString(path);
+            return JSONUtil.toJsonStr(new ToolResponse(true,Files.readString(path), actionDescription));
         } catch (IOException e) {
             String errorMessage = "读取文件失败: " + relativeFilePath + ", 错误: " + e.getMessage();
             log.error(errorMessage, e);

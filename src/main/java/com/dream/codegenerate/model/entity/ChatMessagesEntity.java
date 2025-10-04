@@ -1,7 +1,7 @@
 package com.dream.codegenerate.model.entity;
 
 import com.dream.codegenerate.model.enums.MessageTypeEnum;
-import com.dream.codegenerate.utils.JsonbStringTypeHandler;
+import com.dream.codegenerate.manager.JsonbStringTypeHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,17 +10,12 @@ import com.mybatisflex.annotation.Id;
 import com.mybatisflex.annotation.KeyType;
 import com.mybatisflex.annotation.Table;
 import java.io.Serializable;
-import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 import java.io.Serial;
 
-import com.mybatisflex.core.handler.JacksonTypeHandler;
 import com.mybatisflex.core.keygen.KeyGenerators;
 import com.pgvector.PGvector;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
@@ -29,7 +24,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.postgresql.util.PGobject;
 
 /**
  *  实体类。

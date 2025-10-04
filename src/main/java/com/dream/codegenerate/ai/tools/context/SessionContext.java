@@ -1,4 +1,4 @@
-package com.dream.codegenerate.core.context;
+package com.dream.codegenerate.ai.tools.context;
 
 import com.dream.codegenerate.model.enums.CodeGenTypeEnum;
 import lombok.Data;

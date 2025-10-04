@@ -1,6 +1,8 @@
 package com.dream.codegenerate.ai.tools;
 
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.dream.codegenerate.ai.model.ToolResponse;
 import com.dream.codegenerate.constant.AppConstant;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -30,6 +32,8 @@ public class FileModifyTool extends BaseTool {
             String oldContent,
             @P("替换后的新内容")
             String newContent,
+            @P("对本次操作的概要描述") // <-- 新增参数
+            String actionDescription,
             @ToolMemoryId Long appId
     ) {
         try {
@@ -53,7 +57,7 @@ public class FileModifyTool extends BaseTool {
             }
             Files.writeString(path, modifiedContent, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             log.info("成功修改文件: {}", path.toAbsolutePath());
-            return "文件修改成功: " + relativeFilePath;
+            return JSONUtil.toJsonStr(new ToolResponse(true,"文件修改成功:"+relativeFilePath, actionDescription));
         } catch (IOException e) {
             String errorMessage = "修改文件失败: " + relativeFilePath + ", 错误: " + e.getMessage();
             log.error(errorMessage, e);

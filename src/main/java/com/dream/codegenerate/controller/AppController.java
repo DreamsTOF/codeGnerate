@@ -70,33 +70,36 @@ public class AppController {
         // 调用服务生成代码（SSE 流式返回）
         Flux<ServerSentEvent<String>> contentFlux = appService.chatToGenCode(appId, message, loginUser);
         // 步骤 1: 先对原始数据流进行 map 转换
-        Flux<ServerSentEvent<String>> mappedFlux = contentFlux.map(event -> {
-            Map<String, String> wrapper = Map.of(
-                    "d"
-                    , event.data());
-            String jsonData = JSONUtil.toJsonStr(wrapper);
-            return
-                    ServerSentEvent.<String>builder()
-                            .data(jsonData)
-                            .build();
-        });
-
-// 步骤 2: 对转换后的流应用心跳机制
-        Flux<ServerSentEvent<String>> fluxWithHeartbeat = ReactiveHeartbeatUtils.withHeartbeat(mappedFlux);
+//        Flux<ServerSentEvent<String>> mappedFlux = contentFlux.map(event -> {
+//            Map<String, String> wrapper = Map.of(
+//                    "d"
+//                    , event.data());
+//            String jsonData = JSONUtil.toJsonStr(wrapper);
+//            return
+//                    ServerSentEvent.<String>builder()
+//                            .data(jsonData)
+//                            .build();
+//        });
+//
+//// 步骤 2: 对转换后的流应用心跳机制
+//        Flux<ServerSentEvent<String>> fluxWithHeartbeat = ReactiveHeartbeatUtils.withHeartbeat(mappedFlux);
 
 // 步骤 3: 在流的末尾追加 "done" 事件
-        return fluxWithHeartbeat
-
-        .concatWith(Mono.just(
+        return contentFlux
+                .map(chunk -> {
+                    Map<String, String> wrapper = Map.of("d", chunk.data());
+                    String jsonData = JSONUtil.toJsonStr(wrapper);
+                    return ServerSentEvent.<String>builder()
+                            .data(jsonData)
+                            .build();
+                })
+                .concatWith(Mono.just(
                         // 发送结束事件
                         ServerSentEvent.<String>builder()
-                                .event(
-                                        "done"
-                                )
-                                .data(
-                                        ""
-                                )
-                                .build()));
+                                .event("done")
+                                .data("")
+                                .build()
+                ));
 
     }
 

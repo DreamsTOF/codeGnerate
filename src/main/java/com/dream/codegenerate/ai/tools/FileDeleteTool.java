@@ -1,6 +1,8 @@
 package com.dream.codegenerate.ai.tools;
 
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.dream.codegenerate.ai.model.ToolResponse;
 import com.dream.codegenerate.constant.AppConstant;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -25,6 +27,8 @@ public class FileDeleteTool extends BaseTool {
     public String deleteFile(
             @P("文件的相对路径")
             String relativeFilePath,
+            @P("对本次工具操作的概要描述") // <-- 新增参数
+            String actionDescription,
             @ToolMemoryId Long appId
     ) {
         try {
@@ -48,7 +52,7 @@ public class FileDeleteTool extends BaseTool {
             }
             Files.delete(path);
             log.info("成功删除文件: {}", path.toAbsolutePath());
-            return "文件删除成功: " + relativeFilePath;
+            return JSONUtil.toJsonStr(new ToolResponse(true, "成功删除文件: " + relativeFilePath, actionDescription));
         } catch (IOException e) {
             String errorMessage = "删除文件失败: " + relativeFilePath + ", 错误: " + e.getMessage();
             log.error(errorMessage, e);

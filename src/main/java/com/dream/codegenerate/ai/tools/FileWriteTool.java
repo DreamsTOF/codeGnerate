@@ -2,9 +2,9 @@ package com.dream.codegenerate.ai.tools;
 
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.dream.codegenerate.ai.model.ToolResponse;
 import com.dream.codegenerate.constant.AppConstant;
-import com.dream.codegenerate.core.context.SessionContext;
-import com.dream.codegenerate.model.enums.CodeGenTypeEnum;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import dev.langchain4j.agent.tool.ToolMemoryId;
@@ -31,6 +31,8 @@ public class FileWriteTool extends BaseTool {
             String relativeFilePath,
             @P("要写入文件的内容")
             String content,
+            @P("对本次操作的概要描述") // <-- 新增参数
+            String actionDescription,
             @ToolMemoryId Long appId
 
     ) {
@@ -53,7 +55,8 @@ public class FileWriteTool extends BaseTool {
                     StandardOpenOption.TRUNCATE_EXISTING);
             log.info("成功写入文件: {}", path.toAbsolutePath());
             // 注意要返回相对路径，不能让 AI 把文件绝对路径返回给用户
-            return "文件写入成功: " + relativeFilePath;
+            // 构建一个JSON字符串
+            return JSONUtil.toJsonStr(new ToolResponse(true,"文件写入成功:"+relativeFilePath, actionDescription));
         } catch (IOException e) {
             String errorMessage = "文件写入失败: " + relativeFilePath + ", 错误: " + e.getMessage();
             log.error(errorMessage, e);

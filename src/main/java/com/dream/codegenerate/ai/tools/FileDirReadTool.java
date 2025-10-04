@@ -3,6 +3,8 @@ package com.dream.codegenerate.ai.tools;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
+import cn.hutool.json.JSONUtil;
+import com.dream.codegenerate.ai.model.ToolResponse;
 import com.dream.codegenerate.constant.AppConstant;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -43,6 +45,8 @@ public class FileDirReadTool extends BaseTool {
     public String readDir(
             @P("目录的相对路径，为空则读取整个项目结构")
             String relativeDirPath,
+            @P("对本次工具操作的概要描述") // <-- 新增参数
+            String actionDescription,
             @ToolMemoryId Long appId
     ) {
         try {
@@ -76,7 +80,7 @@ public class FileDirReadTool extends BaseTool {
                         String indent = "  ".repeat(depth);
                         structure.append(indent).append(file.getName());
                     });
-            return structure.toString();
+            return JSONUtil.toJsonStr(new ToolResponse(true, structure.toString(), actionDescription));
         } catch (Exception e) {
             String errorMessage = "读取目录结构失败: " + relativeDirPath + ", 错误: " + e.getMessage();
             log.error(errorMessage, e);

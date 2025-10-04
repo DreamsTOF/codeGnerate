@@ -1,6 +1,5 @@
 package com.dream.codegenerate.core;
 
-import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.dream.codegenerate.ai.AiCodeGeneratorService;
 import com.dream.codegenerate.ai.AiCodeGeneratorServiceFactory;
@@ -9,7 +8,7 @@ import com.dream.codegenerate.ai.model.MultiFileCodeResult;
 import com.dream.codegenerate.ai.model.message.*;
 import com.dream.codegenerate.constant.AppConstant;
 import com.dream.codegenerate.core.builder.VueProjectBuilder;
-import com.dream.codegenerate.core.context.SessionContextManager;
+import com.dream.codegenerate.ai.tools.context.SessionContextManager;
 import com.dream.codegenerate.core.parser.CodeParserExecutor;
 import com.dream.codegenerate.core.saver.CodeFileSaverExecutor;
 import com.dream.codegenerate.exception.BusinessException;
@@ -65,7 +64,7 @@ public class AiCodeGeneratorFacade {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "生成类型不能为空");
         }
         // 根据 appId 获取相应的 AI 服务实例
-        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId, codeGenTypeEnum);
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId, new UserMessage(userMessage),codeGenTypeEnum);
         return switch (codeGenTypeEnum) {
             case HTML -> {
                 HtmlCodeResult result = aiCodeGeneratorService.generateHtmlCode(userMessage);
@@ -96,7 +95,7 @@ public class AiCodeGeneratorFacade {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "生成类型不能为空");
         }
         // 根据 appId 获取相应的 AI 服务实例
-        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId, codeGenTypeEnum);
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId, userMessage,codeGenTypeEnum);
         contextManager.getContext(appId).setCodeGenType(codeGenTypeEnum);
         return switch (codeGenTypeEnum) {
             case HTML -> {
@@ -128,7 +127,7 @@ public class AiCodeGeneratorFacade {
      */
     public Flux<ServerSentEvent<String>> generateCodeStream(UserMessage userMessage, CodeGenTypeEnum codeGenTypeEnum, Long appId) {
         // 1. 从工厂获取根据当前任务优化的 AI 服务实例
-        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId, codeGenTypeEnum);
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId, userMessage,codeGenTypeEnum);
 
         // 2. 在上下文中记录当前的生成类型，这对于工具内部逻辑可能有用
         contextManager.getContext(appId).setCodeGenType(codeGenTypeEnum);
