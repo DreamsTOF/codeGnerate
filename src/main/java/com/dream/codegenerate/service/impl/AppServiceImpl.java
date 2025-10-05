@@ -6,6 +6,7 @@ import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
 import com.dream.codegenerate.core.builder.BuildResult;
+import com.dream.codegenerate.service.*;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import com.dream.codegenerate.ai.AiCodeGenTypeRoutingService;
@@ -26,10 +27,6 @@ import com.dream.codegenerate.model.enums.ChatHistoryMessageTypeEnum;
 import com.dream.codegenerate.model.enums.CodeGenTypeEnum;
 import com.dream.codegenerate.model.vo.AppVO;
 import com.dream.codegenerate.model.vo.UserVO;
-import com.dream.codegenerate.service.AppService;
-import com.dream.codegenerate.service.ChatHistoryService;
-import com.dream.codegenerate.service.ScreenshotService;
-import com.dream.codegenerate.service.UserService;
 import dev.langchain4j.data.message.UserMessage;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -80,6 +77,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     @Resource
     private AiCodeGenTypeRoutingServiceFactory aiCodeGenTypeRoutingServiceFactory;
 
+    @Resource
+    private AccessKeyService accessKeyService;
+
     @Override
     public Flux<ServerSentEvent<String>> chatToGenCode(Long appId, String message, User loginUser) {
         // 1. 参数校验
@@ -106,7 +106,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         chatHistoryService.addChatMessage(appId, message, ChatHistoryMessageTypeEnum.USER.getValue(), loginUser.getId());
         // 6. 调用 AI 生成代码（流式）
         UserMessage userMessage = new UserMessage( message);
-        Flux<ServerSentEvent<String>> codeStream = aiCodeGeneratorFacade.generateCodeStream(userMessage, codeGenTypeEnum, appId);
+        String apiKey = accessKeyService.getApiKey(loginUser.getId());
+        Flux<ServerSentEvent<String>> codeStream = aiCodeGeneratorFacade.generateCodeStream(userMessage, codeGenTypeEnum, appId,apiKey);
         // 7. 收集 AI 响应的内容，并且在完成后保存记录到对话历史
         return streamHandlerExecutor.doExecute(codeStream, chatHistoryService, appId, loginUser, codeGenTypeEnum);
     }
@@ -122,8 +123,10 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         app.setUserId(loginUser.getId());
         // 应用名称暂时为 initPrompt 前 8 位
         app.setAppName(initPrompt.substring(0, Math.min(initPrompt.length(), 8)));
+        //获取apikey
+        String apiKey = accessKeyService.getApiKey(loginUser.getId());
         // 使用 AI 智能选择代码生成类型（多例模式）
-        AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService = aiCodeGenTypeRoutingServiceFactory.createAiCodeGenTypeRoutingService();
+        AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService = aiCodeGenTypeRoutingServiceFactory.createAiCodeGenTypeRoutingService(apiKey);
         CodeGenTypeEnum selectedCodeGenType = aiCodeGenTypeRoutingService.routeCodeGenType(initPrompt);
         app.setCodeGenType(selectedCodeGenType.getValue());
         // 插入数据库

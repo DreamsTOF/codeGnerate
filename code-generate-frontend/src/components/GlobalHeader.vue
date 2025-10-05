@@ -33,6 +33,10 @@
                   <SettingOutlined />
                   修改个人信息
                 </a-menu-item>
+                <a-menu-item @click="showExchangeModal">
+                  <GiftOutlined />
+                  兑换会员
+                </a-menu-item>
                 <a-menu-item @click="doLogout">
                   <LogoutOutlined />
                   退出登录
@@ -54,6 +58,7 @@
       :is-self="true"
       @updated="handleUserInfoUpdated"
     />
+    <VipExchangeModal v-model:open="exchangeModalVisible" />
   </a-layout-header>
 </template>
 
@@ -63,13 +68,19 @@ import { useRouter } from 'vue-router'
 import { type MenuProps, message } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/loginUser.ts'
 import { userLogout } from '@/api/userController.ts'
-import { LogoutOutlined, HomeOutlined, SettingOutlined } from '@ant-design/icons-vue'
+import { LogoutOutlined, HomeOutlined,  GiftOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import UserInfoUpdateModal from '@/components/UserInfoUpdateModal.vue'
-
+import VipExchangeModal from '@/components/VipExchangeModal.vue'
 const loginUserStore = useLoginUserStore()
 const router = useRouter()
 // 当前选中菜单
 const selectedKeys = ref<string[]>(['/'])
+
+const exchangeModalVisible = ref(false)
+
+const showExchangeModal = () => {
+  exchangeModalVisible.value = true
+}
 
 // 用户信息修改弹窗状态
 const userInfoModalVisible = ref(false)

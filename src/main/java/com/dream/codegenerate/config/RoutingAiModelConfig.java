@@ -30,22 +30,4 @@ public class RoutingAiModelConfig {
     private Boolean logRequests = false;
 
     private Boolean logResponses = false;
-
-    /**
-     * 创建用于路由判断的ChatModel
-     */
-    @Bean
-    @Scope("prototype")
-    public ChatModel routingChatModelPrototype() {
-        return OpenAiChatModel.builder()
-                .apiKey(apiKey)
-                .httpClientBuilder(new SpringRestClientBuilder())
-                .modelName(modelName)
-                .baseUrl(baseUrl)
-                .maxTokens(maxTokens)
-                .temperature(temperature)
-                .logRequests(logRequests)
-                .logResponses(logResponses)
-                .build();
-    }
 }

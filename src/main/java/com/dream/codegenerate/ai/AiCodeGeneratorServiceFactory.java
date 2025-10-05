@@ -2,6 +2,7 @@ package com.dream.codegenerate.ai;
 
 import com.dream.codegenerate.ai.memory.StatefulChatMemory;
 import com.dream.codegenerate.ai.memory.VectorChatMemoryStore;
+import com.dream.codegenerate.config.TtdChatModelConfig;
 import com.dream.codegenerate.service.ChatMessagesService;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -13,10 +14,11 @@ import com.dream.codegenerate.model.enums.CodeGenTypeEnum;
 import com.dream.codegenerate.service.ChatHistoryService;
 import com.dream.codegenerate.utils.SpringContextUtil;
 import dev.langchain4j.community.store.memory.chat.redis.RedisChatMemoryStore;
-import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.http.client.spring.restclient.SpringRestClientBuilder;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
+import dev.langchain4j.model.anthropic.AnthropicStreamingChatModel;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.service.AiServices;
@@ -31,7 +33,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.List;
 
 /**
  * AI 服务创建工厂
@@ -45,6 +46,9 @@ public class AiCodeGeneratorServiceFactory {
 
     @Resource
     private RedisChatMemoryStore redisChatMemoryStore;
+
+    @Resource
+    private TtdChatModelConfig ttdChatModelConfig;
 
     @Resource
     private VectorChatMemoryStore vectorChatMemoryStore;
@@ -113,7 +117,7 @@ public class AiCodeGeneratorServiceFactory {
      * @return
      */
     public AiCodeGeneratorService getAiCodeGeneratorService(long appId) {
-        return getAiCodeGeneratorService(appId,new UserMessage("请根据用户输入生成代码，请勿直接输出代码，请勿输出任何提示"), CodeGenTypeEnum.HTML);
+        return getAiCodeGeneratorService(appId,new UserMessage("请根据用户输入生成代码，请勿直接输出代码，请勿输出任何提示"), CodeGenTypeEnum.HTML, "apiKey");
     }
 
     /**
@@ -195,16 +199,17 @@ public class AiCodeGeneratorServiceFactory {
         };
     }
      /**
-     * 【推荐】根据 appId 和生成类型获取 AI 服务
-     * 此方法会根据任务复杂度选择合适的模型，以优化成本。
-     *
-     * @param appId       应用 id
-     * @param codeGenType 生成类型
-     * @return 统一的 AiCodeGeneratorService 实例
-     */
-    public AiCodeGeneratorService getAiCodeGeneratorService(long appId, UserMessage userMessage, CodeGenTypeEnum codeGenType) {
+      * 【推荐】根据 appId 和生成类型获取 AI 服务
+      * 此方法会根据任务复杂度选择合适的模型，以优化成本。
+      *
+      * @param appId       应用 id
+      * @param codeGenType 生成类型
+      * @param apiKey
+      * @return 统一的 AiCodeGeneratorService 实例
+      */
+    public AiCodeGeneratorService getAiCodeGeneratorService(long appId, UserMessage userMessage, CodeGenTypeEnum codeGenType, String apiKey) {
         String cacheKey = buildCacheKey(appId, codeGenType);
-        return serviceCache.get(cacheKey, key -> createAiService(appId,userMessage, codeGenType));
+        return serviceCache.get(cacheKey, key -> createAiService(appId,userMessage, codeGenType,apiKey));
     }
 
     /**
@@ -212,28 +217,29 @@ public class AiCodeGeneratorServiceFactory {
      *
      * @param appId       应用 id
      * @param codeGenType 生成类型
+     * @param apiKey
      * @return AiCodeGeneratorService 实例
      */
-    private AiCodeGeneratorService createAiService(long appId, UserMessage userMessage,  CodeGenTypeEnum codeGenType) {
+    private AiCodeGeneratorService createAiService(long appId, UserMessage userMessage, CodeGenTypeEnum codeGenType, String apiKey) {
         if (appId==0){
             appId=165456418;
         }
         log.info("为 appId: {} 和类型: {} 创建 AI 服务实例", appId, codeGenType.getValue());
 
         // 1. 通用的内存管理
-//        MessageWindowChatMemory chatMemory = MessageWindowChatMemory
-//                .builder()
-//                .id(appId)
-//                .chatMemoryStore(vectorChatMemoryStore)
-////                .chatMemoryStore(redisChatMemoryStore)
-//                .maxMessages(400)
-//                .build();
-        StatefulChatMemory chatMemory = StatefulChatMemory.builder()
+        MessageWindowChatMemory chatMemory = MessageWindowChatMemory
+                .builder()
                 .id(appId)
                 .chatMemoryStore(vectorChatMemoryStore)
-                .messages(chatMessagesService.loadChatHistory(appId, userMessage, 1000))
+//                .chatMemoryStore(redisChatMemoryStore)
+                .maxMessages(1000)
                 .build();
-//        chatHistoryService.loadChatHistoryToMemory(appId, chatMemory, 1000);
+//        StatefulChatMemory chatMemory = StatefulChatMemory.builder()
+//                .id(appId)
+//                .chatMemoryStore(vectorChatMemoryStore)
+//                .messages(chatMessagesService.loadChatHistory(appId, userMessage, 1000))
+//                .build();
+        chatHistoryService.loadChatHistoryToMemory(appId, chatMemory, 1000);
 
 
         // 2. 根据任务类型选择不同的模型和 Prompt
@@ -262,16 +268,15 @@ public class AiCodeGeneratorServiceFactory {
         // 4. 构建统一的 AI 服务
         return AiServices.builder(AiCodeGeneratorService.class)
 //                .chatModel(chatModel)
-                .streamingChatModel(selectedModel) // <--- 使用动态选择的模型
+                .streamingChatModel(getStreamingChatModel(apiKey)) // <--- 使用动态选择的模型
                 .chatMemoryProvider(memoryId -> chatMemory)
-                .tools(toolManager.getTool("writeFile"), toolManager.getTool("readFile"))
-//                .tools(toolManager.getAllTools())
+                .tools(toolManager.getAllTools())
                 .systemMessageProvider(chat -> systemPromptContent) // <--- 提供加载好的 Prompt 内容
                 .hallucinatedToolNameStrategy(toolExecutionRequest ->
                         ToolExecutionResultMessage.from(toolExecutionRequest,
                                 "Error: there is no tool called " + toolExecutionRequest.name())
                 )
-                .maxSequentialToolsInvocations(400)
+                .maxSequentialToolsInvocations(1000)
                 .build();
     }
 
@@ -282,7 +287,7 @@ public class AiCodeGeneratorServiceFactory {
      */
     @Bean
     public AiCodeGeneratorService aiCodeGeneratorService() {
-        return getAiCodeGeneratorService(0, null, CodeGenTypeEnum.HTML);
+        return getAiCodeGeneratorService(0, null, CodeGenTypeEnum.HTML, "apiKey");
     }
 
     /**
@@ -294,5 +299,24 @@ public class AiCodeGeneratorServiceFactory {
      */
     private String buildCacheKey(long appId, CodeGenTypeEnum codeGenType) {
         return appId + "_" + codeGenType.getValue();
+    }
+
+    /**
+     * 推理流式模型（用于 Vue 项目生成，带工具调用）
+     */
+
+    private StreamingChatModel getStreamingChatModel(String apiKey) {
+        return AnthropicStreamingChatModel.builder()
+                .timeout(Duration.ofMinutes(50))
+                .httpClientBuilder(new SpringRestClientBuilder())
+                .cacheSystemMessages(true)
+                .apiKey(apiKey)
+                .baseUrl(ttdChatModelConfig.getBaseUrl())
+                .modelName(ttdChatModelConfig.getModelName())
+                .maxTokens(ttdChatModelConfig.getMaxTokens())
+                .temperature(ttdChatModelConfig.getTemperature())
+                .logRequests(ttdChatModelConfig.getLogRequests())
+                .logResponses(ttdChatModelConfig.getLogResponses())
+                .build();
     }
 }

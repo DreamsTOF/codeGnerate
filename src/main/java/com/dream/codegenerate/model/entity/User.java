@@ -8,6 +8,7 @@ import java.io.Serializable;
 import java.time.LocalDateTime;
 
 import java.io.Serial;
+import java.util.Date;
 
 import com.mybatisflex.core.keygen.KeyGenerators;
 import lombok.AllArgsConstructor;
@@ -72,6 +73,22 @@ public class User implements Serializable {
     @Column("userRole")
     private String userRole;
 
+    /**
+     * 会员兑换码
+     */
+    @Column("vipCode")
+    private String vipCode;
+
+    /**
+     * 会员编号
+     */
+    @Column("vipNumber")
+    private Long vipNumber;
+    /**
+     * 会员过期时间
+     */
+    @Column("vipExpireTime")
+    private Date vipExpireTime;
     /**
      * 编辑时间
      */

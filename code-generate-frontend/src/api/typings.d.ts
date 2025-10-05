@@ -1,4 +1,13 @@
 declare namespace API {
+  type AccessKey = {
+    id?: number
+    userId?: number
+    apiKey?: string
+    isUse?: number
+    cdKey?: string
+    apiKeyId?: number
+  }
+
   type AppAddRequest = {
     initPrompt?: string
   }
@@ -102,6 +111,12 @@ declare namespace API {
     createTime?: string
     updateTime?: string
     user?: UserVO
+  }
+
+  type BaseResponseAccessKey = {
+    code?: number
+    data?: AccessKey
+    message?: string
   }
 
   type BaseResponseAppVersionCompareVO = {
@@ -317,6 +332,9 @@ declare namespace API {
     userAvatar?: string
     userProfile?: string
     userRole?: string
+    vipCode?: string
+    vipNumber?: number
+    vipExpireTime?: string
     editTime?: string
     createTime?: string
     updateTime?: string
@@ -370,5 +388,9 @@ declare namespace API {
     userProfile?: string
     userRole?: string
     createTime?: string
+  }
+
+  type VipExchangeRequest = {
+    vipCode?: string
   }
 }

@@ -163,7 +163,7 @@ public class VueProjectBuilder {
                 return new BuildResult(true, "命令执行成功", output);
             } else {
                 String errorMsg = "命令执行失败，退出码: " + exitCode;
-                log.error(errorMsg);
+                log.error(errorMsg+"原因"+errorOutput);
                 return new BuildResult(false, errorMsg, errorOutput);
             }
         } catch (Exception e) {

@@ -113,7 +113,6 @@ public class ChatMessagesServiceImpl extends ServiceImpl<ChatMessagesMapper, Cha
                     ChatMessage chatMessage = entity.toChatMessage(langchain4jObjectMapper);
                     if (chatMessage instanceof AiMessage aiMessage && aiMessage.hasToolExecutionRequests()) {
                         for (ToolExecutionRequest request : aiMessage.toolExecutionRequests()) {
-
                             // 调用 Mapper 根据 toolCallId 查询对应的工具执行结果
                             ChatMessagesEntity toolResultEntity = this.mapper.findByToolCallId(memoryId, request.id());
 

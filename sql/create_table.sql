@@ -86,3 +86,13 @@ ALTER TABLE `app_version`
     ADD COLUMN `cover` varchar(512) NULL COMMENT '版本封面截图URL' AFTER `message`;
 ALTER TABLE `app`
     ADD COLUMN `currentVersion` int NULL COMMENT '当前应用版本' ;
+
+create table if not exists access_key
+(
+    id           bigint auto_increment comment 'id' primary key,
+    userId        bigint                             not null comment '关联的用户id',
+    accessKey     varchar(512)                           not null comment '访问api的key',
+    isUse          int default 0                           null comment '是否使用过兑换码',
+    cdKey          varchar(512)                        null comment '兑换码',
+    INDEX idx_userName (userId)
+    ) comment '访问key' collate = utf8mb4_unicode_ci;

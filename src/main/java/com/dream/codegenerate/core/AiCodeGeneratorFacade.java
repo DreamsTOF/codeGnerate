@@ -7,6 +7,7 @@ import com.dream.codegenerate.ai.model.HtmlCodeResult;
 import com.dream.codegenerate.ai.model.MultiFileCodeResult;
 import com.dream.codegenerate.ai.model.message.*;
 import com.dream.codegenerate.constant.AppConstant;
+import com.dream.codegenerate.core.builder.BuildResult;
 import com.dream.codegenerate.core.builder.VueProjectBuilder;
 import com.dream.codegenerate.ai.tools.context.SessionContextManager;
 import com.dream.codegenerate.core.parser.CodeParserExecutor;
@@ -64,7 +65,7 @@ public class AiCodeGeneratorFacade {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "生成类型不能为空");
         }
         // 根据 appId 获取相应的 AI 服务实例
-        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId, new UserMessage(userMessage),codeGenTypeEnum);
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId, new UserMessage(userMessage),codeGenTypeEnum, "apiKey");
         return switch (codeGenTypeEnum) {
             case HTML -> {
                 HtmlCodeResult result = aiCodeGeneratorService.generateHtmlCode(userMessage);
@@ -95,7 +96,7 @@ public class AiCodeGeneratorFacade {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "生成类型不能为空");
         }
         // 根据 appId 获取相应的 AI 服务实例
-        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId, userMessage,codeGenTypeEnum);
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId, userMessage,codeGenTypeEnum, "apiKey");
         contextManager.getContext(appId).setCodeGenType(codeGenTypeEnum);
         return switch (codeGenTypeEnum) {
             case HTML -> {
@@ -123,11 +124,12 @@ public class AiCodeGeneratorFacade {
      * @param userMessage     用户提示词
      * @param codeGenTypeEnum 生成类型
      * @param appId           应用 ID
+     * @param apiKey
      * @return 包含AI思考和工具调用过程的SSE事件流
      */
-    public Flux<ServerSentEvent<String>> generateCodeStream(UserMessage userMessage, CodeGenTypeEnum codeGenTypeEnum, Long appId) {
+    public Flux<ServerSentEvent<String>> generateCodeStream(UserMessage userMessage, CodeGenTypeEnum codeGenTypeEnum, Long appId, String apiKey) {
         // 1. 从工厂获取根据当前任务优化的 AI 服务实例
-        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId, userMessage,codeGenTypeEnum);
+        AiCodeGeneratorService aiCodeGeneratorService = aiCodeGeneratorServiceFactory.getAiCodeGeneratorService(appId, userMessage,codeGenTypeEnum,apiKey);
 
         // 2. 在上下文中记录当前的生成类型，这对于工具内部逻辑可能有用
         contextManager.getContext(appId).setCodeGenType(codeGenTypeEnum);
@@ -178,9 +180,13 @@ public class AiCodeGeneratorFacade {
                     })
                     .onCompleteResponse(response -> {
                         // 对于Vue项目，在所有流程结束后执行构建
+                        BuildResult buildResult= null;
                         if (contextManager.getContext(appId).getCodeGenType() == CodeGenTypeEnum.VUE_PROJECT) {
                             String projectPath = AppConstant.CODE_OUTPUT_ROOT_DIR + "/vue_project_" + appId;
-                            vueProjectBuilder.buildProject(projectPath);
+                            buildResult = vueProjectBuilder.buildProject(projectPath);
+                        }
+                        if (buildResult != null && !buildResult.isSuccess()){
+
                         }
                         // 发送流程结束的信号
                         sink.next(ServerSentEvent.<String>builder().event("done").data("").build());

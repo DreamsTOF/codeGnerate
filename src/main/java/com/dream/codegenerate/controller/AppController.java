@@ -3,6 +3,7 @@ package com.dream.codegenerate.controller;
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONUtil;
+import com.dream.codegenerate.service.AccessKeyService;
 import com.dream.codegenerate.utils.ReactiveHeartbeatUtils;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -56,6 +57,7 @@ public class AppController {
 
     @Resource
     private ProjectDownloadService projectDownloadService;
+
 
     @GetMapping(value = "/chat/gen/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @RateLimit(limitType = RateLimitType.USER, rate = 5, rateInterval = 60, message = "AI 对话请求过于频繁，请稍后再试")

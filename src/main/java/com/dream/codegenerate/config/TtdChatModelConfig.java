@@ -3,10 +3,8 @@ package com.dream.codegenerate.config;
 import dev.langchain4j.http.client.spring.restclient.SpringRestClientBuilder;
 import dev.langchain4j.model.anthropic.AnthropicStreamingChatModel;
 import dev.langchain4j.model.chat.StreamingChatModel;
-import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.http.client.JdkHttpClientBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Scope;
@@ -16,7 +14,7 @@ import java.time.Duration;
 @Configuration
 @ConfigurationProperties(prefix = "langchain4j.anthropic.reasoning-streaming-chat-model")
 @Data
-public class ttdChatModelConfig {
+public class TtdChatModelConfig {
 
     private String baseUrl;
 

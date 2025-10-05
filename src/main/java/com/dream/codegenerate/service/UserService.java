@@ -95,4 +95,6 @@ public interface UserService extends IService<User> {
     String getEncryptPassword(String userPassword);
 
     Boolean updateMyAvatar(MultipartFile multipartFile, User user);
+
+    boolean exchangeVip(User loginUser, String vipCode);
 }

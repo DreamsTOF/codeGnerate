@@ -14,12 +14,12 @@ import java.util.Map;
 public class MyBatisCodeGenerator {
 
     // 要生成的表名
-    private static final String[] TABLE_NAMES = {"chat_messages"};
+    private static final String[] TABLE_NAMES = {"access_key"};
 
     public static void main(String[] args) {
         // 获取数据元信息
         Dict dict = YamlUtil.loadByPath("application-local.yml");
-        Map<String, Object> dataSourceConfig = dict.getByPath("mybatis-flex.datasource.pg");
+        Map<String, Object> dataSourceConfig = dict.getByPath("mybatis-flex.datasource.mysql");
         String url = String.valueOf(dataSourceConfig.get("url"));
         String username = String.valueOf(dataSourceConfig.get("username"));
         String password = String.valueOf(dataSourceConfig.get("password"));

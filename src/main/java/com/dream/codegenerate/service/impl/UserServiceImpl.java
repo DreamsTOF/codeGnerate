@@ -2,8 +2,19 @@ package com.dream.codegenerate.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.collection.CollUtil;
+import cn.hutool.core.date.DateUtil;
+import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONArray;
+import cn.hutool.json.JSONUtil;
 import com.dream.codegenerate.manager.CosManager;
+import com.dream.codegenerate.model.dto.user.VipCode;
+import com.dream.codegenerate.model.entity.AccessKey;
+import com.dream.codegenerate.newapi.NewApiClient;
+import com.dream.codegenerate.newapi.common.ApiResponse;
+import com.dream.codegenerate.newapi.model.tokrn.request.CreateTokenRequest;
+import com.dream.codegenerate.newapi.model.tokrn.response.TokenInfo;
+import com.dream.codegenerate.service.AccessKeyService;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import com.dream.codegenerate.exception.BusinessException;
@@ -19,6 +30,8 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,10 +39,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static com.dream.codegenerate.constant.UserConstant.USER_LOGIN_STATE;
@@ -46,6 +58,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Resource
     private CosManager cosManager;
+
+    @Resource
+    private NewApiClient newApiClient;
+
+    @Resource
+    private AccessKeyService accessKeyService;
     @Override
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
         // 1. 校验参数
@@ -81,6 +99,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (!saveResult) {
             throw new BusinessException(ErrorCode.OPERATION_ERROR, "注册失败，数据库错误");
         }
+        //异步调用获取key
+        CompletableFuture.runAsync(() -> getNewApiKey(user.getId()));
         return user.getId();
     }
 
@@ -269,4 +289,129 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
             }
         }
     }
+
+    // region ------- 以下代码为用户兑换会员功能 --------
+
+    // 新增依赖注入
+    @Autowired
+    private ResourceLoader resourceLoader;
+
+    // 文件读写锁（确保并发安全）
+    private final ReentrantLock fileLock = new ReentrantLock();
+
+    // VIP 角色常量（根据你的需求自定义）
+    private static final String VIP_ROLE = "vip";
+
+    /**
+     * 兑换会员
+     *
+     * @param user
+     * @param vipCode
+     * @return
+     */
+    @Override
+    public boolean exchangeVip(User user, String vipCode) {
+        // 1. 参数校验
+        if (user == null || StrUtil.isBlank(vipCode)) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR);
+        }
+        // 2. 读取并校验兑换码
+        VipCode targetCode = validateAndMarkVipCode(vipCode);
+        // 3. 更新用户信息
+        updateUserVipInfo(user, targetCode.getCode());
+        return true;
+    }
+
+    /**
+     * 校验兑换码并标记为已使用
+     */
+    private VipCode validateAndMarkVipCode(String vipCode) {
+        fileLock.lock(); // 加锁保证文件操作原子性
+        try {
+            // 读取 JSON 文件
+            JSONArray jsonArray = readVipCodeFile();
+
+            // 查找匹配的未使用兑换码
+            List<VipCode> codes = JSONUtil.toList(jsonArray, VipCode.class);
+            VipCode target = codes.stream()
+                    .filter(code -> code.getCode().equals(vipCode) && !code.isHasUsed())
+                    .findFirst()
+                    .orElseThrow(() -> new BusinessException(ErrorCode.PARAMS_ERROR, "无效的兑换码"));
+
+            // 标记为已使用
+            target.setHasUsed(true);
+
+            // 写回文件
+            writeVipCodeFile(JSONUtil.parseArray(codes));
+            return target;
+        } finally {
+            fileLock.unlock();
+        }
+    }
+
+    /**
+     * 读取兑换码文件
+     */
+    private JSONArray readVipCodeFile() {
+        try {
+            org.springframework.core.io.Resource resource = resourceLoader.getResource("classpath:biz/vipCode.json");
+            String content = FileUtil.readString(resource.getFile(), StandardCharsets.UTF_8);
+            return JSONUtil.parseArray(content);
+        } catch (IOException e) {
+            log.error("读取兑换码文件失败", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "系统繁忙");
+        }
+    }
+
+    /**
+     * 写入兑换码文件
+     */
+    private void writeVipCodeFile(JSONArray jsonArray) {
+        try {
+            org.springframework.core.io.Resource resource = resourceLoader.getResource("classpath:biz/vipCode.json");
+            FileUtil.writeString(jsonArray.toStringPretty(), resource.getFile(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            log.error("更新兑换码文件失败", e);
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "系统繁忙");
+        }
+    }
+
+    /**
+     * 更新用户会员信息
+     */
+    private void updateUserVipInfo(User user, String usedVipCode) {
+        // 计算过期时间（当前时间 + 1 年）
+        Date expireTime = DateUtil.offsetMonth(new Date(), 12); // 计算当前时间加 1 年后的时间
+
+        // 构建更新对象
+        User updateUser = new User();
+        updateUser.setId(user.getId());
+        updateUser.setVipExpireTime(expireTime); // 设置过期时间
+        updateUser.setVipCode(usedVipCode);     // 记录使用的兑换码
+        updateUser.setUserRole(VIP_ROLE);       // 修改用户角色
+
+        // 执行更新
+        boolean updated = this.updateById(updateUser);
+        if (!updated) {
+            throw new BusinessException(ErrorCode.OPERATION_ERROR, "开通会员失败，操作数据库失败");
+        }
+    }
+
+    // endregion ------- 以下代码为用户兑换会员功能 --------
+
+    private void getNewApiKey(Long userId)
+    {
+        CreateTokenRequest createTokenRequest = new CreateTokenRequest();
+        createTokenRequest.setName(String.valueOf(userId));
+        createTokenRequest.setRemain_quota(0L);
+        newApiClient.createToken(createTokenRequest);
+        ApiResponse<TokenInfo> token = newApiClient.searchToken(String.valueOf(userId));
+        AccessKey accessKey = new AccessKey();
+        accessKey.setApiKeyId(token.getData().getId());
+        accessKey.setUserId(userId);
+        accessKey.setApiKey(token.getData().getKey());
+        accessKey.setCdKey(UUID.randomUUID().toString());
+        accessKeyService.save(accessKey);
+    }
+
 }
