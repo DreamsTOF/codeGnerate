@@ -37,6 +37,10 @@
                   <GiftOutlined />
                   兑换会员
                 </a-menu-item>
+                <a-menu-item @click="showKeyModal">
+                  <GiftOutlined />
+                  兑换ai额度
+                </a-menu-item>
                 <a-menu-item @click="doLogout">
                   <LogoutOutlined />
                   退出登录
@@ -59,6 +63,9 @@
       @updated="handleUserInfoUpdated"
     />
     <VipExchangeModal v-model:open="exchangeModalVisible" />
+    <ApiKeyModal
+      v-model:open="keyModalVisible"
+    />
   </a-layout-header>
 </template>
 
@@ -71,6 +78,7 @@ import { userLogout } from '@/api/userController.ts'
 import { LogoutOutlined, HomeOutlined,  GiftOutlined, SettingOutlined } from '@ant-design/icons-vue'
 import UserInfoUpdateModal from '@/components/UserInfoUpdateModal.vue'
 import VipExchangeModal from '@/components/VipExchangeModal.vue'
+import ApiKeyModal  from '@/components/ApiKeyModal.vue'
 const loginUserStore = useLoginUserStore()
 const router = useRouter()
 // 当前选中菜单
@@ -78,8 +86,14 @@ const selectedKeys = ref<string[]>(['/'])
 
 const exchangeModalVisible = ref(false)
 
+const keyModalVisible = ref(false)
+
 const showExchangeModal = () => {
   exchangeModalVisible.value = true
+}
+
+const showKeyModal = () => {
+  keyModalVisible.value = true
 }
 
 // 用户信息修改弹窗状态

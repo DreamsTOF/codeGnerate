@@ -227,18 +227,18 @@ public class AiCodeGeneratorServiceFactory {
         log.info("为 appId: {} 和类型: {} 创建 AI 服务实例", appId, codeGenType.getValue());
 
         // 1. 通用的内存管理
-        MessageWindowChatMemory chatMemory = MessageWindowChatMemory
-                .builder()
-                .id(appId)
-                .chatMemoryStore(vectorChatMemoryStore)
-//                .chatMemoryStore(redisChatMemoryStore)
-                .maxMessages(1000)
-                .build();
-//        StatefulChatMemory chatMemory = StatefulChatMemory.builder()
+//        MessageWindowChatMemory chatMemory = MessageWindowChatMemory
+//                .builder()
 //                .id(appId)
 //                .chatMemoryStore(vectorChatMemoryStore)
-//                .messages(chatMessagesService.loadChatHistory(appId, userMessage, 1000))
+////                .chatMemoryStore(redisChatMemoryStore)
+//                .maxMessages(1000)
 //                .build();
+        StatefulChatMemory chatMemory = StatefulChatMemory.builder()
+                .id(appId)
+                .chatMemoryStore(redisChatMemoryStore)
+//                .messages(chatMessagesService.loadChatHistory(appId, userMessage, 1000))
+                .build();
         chatHistoryService.loadChatHistoryToMemory(appId, chatMemory, 1000);
 
 

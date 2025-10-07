@@ -44,6 +44,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
+import static cn.hutool.core.thread.ThreadUtil.sleep;
 import static com.dream.codegenerate.constant.UserConstant.USER_LOGIN_STATE;
 
 /**
@@ -402,14 +403,16 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     private void getNewApiKey(Long userId)
     {
         CreateTokenRequest createTokenRequest = new CreateTokenRequest();
-        createTokenRequest.setName(String.valueOf(userId));
-        createTokenRequest.setRemain_quota(0L);
+        createTokenRequest.setName(userId.toString());
+        createTokenRequest.setRemain_quota(1L);
         newApiClient.createToken(createTokenRequest);
-        ApiResponse<TokenInfo> token = newApiClient.searchToken(String.valueOf(userId));
+        sleep(2000);
+        ApiResponse<List<TokenInfo>> tokenList = newApiClient.searchToken(userId.toString());
+        TokenInfo token = tokenList.getData().getFirst();
         AccessKey accessKey = new AccessKey();
-        accessKey.setApiKeyId(token.getData().getId());
+        accessKey.setApiKeyId(token.getId());
         accessKey.setUserId(userId);
-        accessKey.setApiKey(token.getData().getKey());
+        accessKey.setApiKey(token.getKey());
         accessKey.setCdKey(UUID.randomUUID().toString());
         accessKeyService.save(accessKey);
     }

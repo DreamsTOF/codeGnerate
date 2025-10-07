@@ -10,6 +10,8 @@ import com.dream.codegenerate.newapi.model.tokrn.response.TokenInfo;
 import com.dream.codegenerate.newapi.model.tokrn.response.UpdateTokenResponseData;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
+
 // 假设这个类是一个Spring Bean，例如用@Service注解
 @Component
 public class NewApiClient {
@@ -50,7 +52,7 @@ public class NewApiClient {
      * @param keyword 搜索关键字
      * @return ApiResponse，data部分为TokenInfo
      */
-    public ApiResponse<TokenInfo> searchToken(String keyword) {
+    public ApiResponse<List<TokenInfo>> searchToken(String keyword) {
         // 1. 拼接带有查询参数的URL
         String url = NEW_API_BASE_URL + "/api/token/search";
 
@@ -65,7 +67,7 @@ public class NewApiClient {
 
         // 3. 将响应的JSON字符串转换为ApiResponse<TokenInfo>对象
         // 注意这里使用了TypeReference来处理泛型
-        return JSONUtil.toBean(responseBody, new TypeReference<ApiResponse<TokenInfo>>() {}, false);
+        return JSONUtil.toBean(responseBody, new TypeReference<ApiResponse<List<TokenInfo>>>() {}, false);
     }
 
     /**

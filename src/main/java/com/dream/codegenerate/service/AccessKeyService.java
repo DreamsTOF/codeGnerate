@@ -1,6 +1,7 @@
 package com.dream.codegenerate.service;
 
 import com.dream.codegenerate.model.entity.AccessKey;
+import com.dream.codegenerate.model.vo.AccessKeyVo;
 import com.mybatisflex.core.service.IService;
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -15,7 +16,7 @@ public interface AccessKeyService extends IService<AccessKey> {
 
     String getCdKey(HttpServletRequest request);
 
-    AccessKey getInfo(HttpServletRequest request);
+    AccessKeyVo getInfo(HttpServletRequest request);
 
-    boolean useCdKey(HttpServletRequest request);
+    boolean useCdKey(HttpServletRequest request, String cdKey);
 }

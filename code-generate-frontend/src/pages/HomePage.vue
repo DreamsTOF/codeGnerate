@@ -11,7 +11,7 @@
       <div class="input-section">
         <a-textarea
           v-model:value="userPrompt"
-          placeholder="创建一个简单的网页"
+          placeholder="新用户请先使用兑换码兑换额度"
           :rows="4"
           :maxlength="2000"
           class="prompt-input"

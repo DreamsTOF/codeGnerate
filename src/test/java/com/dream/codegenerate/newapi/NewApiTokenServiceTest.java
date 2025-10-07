@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import java.io.File;
+import java.util.List;
 
 @SpringBootTest
 class NewApiTokenServiceTest {
@@ -30,7 +31,10 @@ class NewApiTokenServiceTest {
 
     @Test
     void searchToken() {
-        ApiResponse<TokenInfo> token = newApiClient.searchToken("12345678");
+        ApiResponse<List<TokenInfo>> tokenList = newApiClient.searchToken("332389438996914176");
+        TokenInfo token = tokenList.getData().getFirst();
+
+
     }
 
     @Test

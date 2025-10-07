@@ -5,6 +5,7 @@ import com.dream.codegenerate.exception.ErrorCode;
 import com.dream.codegenerate.exception.ThrowUtils;
 import com.dream.codegenerate.model.entity.AccessKey;
 import com.dream.codegenerate.model.entity.User;
+import com.dream.codegenerate.model.vo.AccessKeyVo;
 import com.dream.codegenerate.newapi.NewApiClient;
 import com.dream.codegenerate.newapi.common.ApiResponse;
 import com.dream.codegenerate.newapi.model.tokrn.request.UpdateTokenRequest;
@@ -62,7 +63,7 @@ public class AccessKeyServiceImpl extends ServiceImpl<AccessKeyMapper, AccessKey
     }
 
     @Override
-    public AccessKey getInfo(HttpServletRequest request) {
+    public AccessKeyVo getInfo(HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
         Long userId = loginUser.getId();
         QueryWrapper wrapper = new QueryWrapper();
@@ -72,12 +73,14 @@ public class AccessKeyServiceImpl extends ServiceImpl<AccessKeyMapper, AccessKey
         {
             one.setCdKey(null);
         }
-        return one;
+        AccessKeyVo  vo= new AccessKeyVo();
+        vo.setCdKey(one.getCdKey());
+        return vo;
     }
 
     //使用兑换码
     @Override
-    public boolean useCdKey(HttpServletRequest request) {
+    public boolean useCdKey(HttpServletRequest request, String cdKey) {
         // 1. 获取当前登录用户
         User loginUser = userService.getLoginUser(request);
         Long userId = loginUser.getId();
@@ -89,12 +92,12 @@ public class AccessKeyServiceImpl extends ServiceImpl<AccessKeyMapper, AccessKey
         // 如果 existingKey 不为 null 且 cdKey 字段有内容，则说明已使用
         ThrowUtils.throwIf(existingKey != null && existingKey.getIsUse()!=0,
                 ErrorCode.OPERATION_ERROR, "您已经使用过兑换码，请勿重复使用");
-
+        ThrowUtils.throwIf(!cdKey.equals(existingKey.getCdKey()) ,
+                ErrorCode.OPERATION_ERROR, "无效的兑换码");
         // 5. 将这个兑换码分配给当前用户
         // 使用 MyBatis-Flex 的 UpdateChain，代码更优雅
         boolean updateResult = UpdateChain.of(AccessKey.class)
                 .set(ACCESS_KEY.IS_USE, 1)
-                .set(ACCESS_KEY.USER_ID, userId)
                 .where(ACCESS_KEY.ID.eq(existingKey.getId()))
                 .update();
 
@@ -106,6 +109,7 @@ public class AccessKeyServiceImpl extends ServiceImpl<AccessKeyMapper, AccessKey
         UpdateTokenRequest updateTokenRequest = new UpdateTokenRequest();
         updateTokenRequest.setName(String.valueOf(userId));
         updateTokenRequest.setId(existingKey.getApiKeyId());
+        updateTokenRequest.setExpired_time(-1);
         updateTokenRequest.setRemain_quota(500000L);
         ApiResponse<UpdateTokenResponseData> updateTokenResponseDataApiResponse = newApiClient.updateToken(updateTokenRequest);
         return updateTokenResponseDataApiResponse.isSuccess();

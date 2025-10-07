@@ -138,18 +138,27 @@ export async function updateUser(body: API.UserUpdateRequest, options?: { [key: 
   })
 }
 
-/** 此处后端没有提供注释 POST /user/update/myavatar */
-export async function updateMyAvatar(body: {}, options?: { [key: string]: any }) {
+/**
+ * 更新当前登录用户的头像 (新版)
+ * 后端从请求上下文中获取用户信息，无需前端传递 id
+ * POST /user/update/myavatar
+ */
+export async function updateMyAvatar(
+  file: File,
+  options?: { [key: string]: any }
+) {
+  const formData = new FormData();
+  // @RequestPart("file") 需要这里的 key 是 'file'
+  formData.append('file', file);
+
   return request<API.BaseResponseBoolean>('/user/update/myavatar', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    data: body,
+    // 当 data 是 FormData 时，浏览器会自动设置正确的 Content-Type，
+    // 我们不需要手动添加 'Content-Type': 'multipart/form-data'
+    data: formData,
     ...(options || {}),
-  })
+  });
 }
-
 /** 此处后端没有提供注释 POST /user/update/myinfo */
 export async function updateMyInfo(body: API.UserUpdateRequest, options?: { [key: string]: any }) {
   return request<API.BaseResponseBoolean>('/user/update/myinfo', {

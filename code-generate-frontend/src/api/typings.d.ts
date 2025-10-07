@@ -1,11 +1,6 @@
 declare namespace API {
-  type AccessKey = {
-    id?: number
-    userId?: number
-    apiKey?: string
-    isUse?: number
+  type AccessKeyVo = {
     cdKey?: string
-    apiKeyId?: number
   }
 
   type AppAddRequest = {
@@ -113,9 +108,9 @@ declare namespace API {
     user?: UserVO
   }
 
-  type BaseResponseAccessKey = {
+  type BaseResponseAccessKeyVo = {
     code?: number
-    data?: AccessKey
+    data?: AccessKeyVo
     message?: string
   }
 
@@ -322,6 +317,10 @@ declare namespace API {
   type StaticFilesListRequest = {
     codeGenType?: 'HTML' | 'MULTI_FILE' | 'VUE_PROJECT'
     appId?: number
+  }
+
+  type useCdKeyParams = {
+    cdKey: string
   }
 
   type User = {

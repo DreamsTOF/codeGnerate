@@ -3,6 +3,7 @@ package com.dream.codegenerate.controller;
 import com.dream.codegenerate.common.BaseResponse;
 import com.dream.codegenerate.common.ResultUtils;
 import com.dream.codegenerate.model.entity.AccessKey;
+import com.dream.codegenerate.model.vo.AccessKeyVo;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -38,7 +39,8 @@ public class AccessKeyController {
      * @return key详细信息
      */
     @GetMapping("getInfo")
-    public BaseResponse<AccessKey> getApiKey(HttpServletRequest  request) {
+    public BaseResponse<AccessKeyVo> getApiKey(HttpServletRequest  request) {
+
         return ResultUtils.success(accessKeyService.getInfo(request));
     }
     /**
@@ -46,8 +48,8 @@ public class AccessKeyController {
      *
      */
     @PutMapping("useCdKey")
-    public BaseResponse<Boolean> useCdKey(HttpServletRequest  request) {
-        return ResultUtils.success(accessKeyService.useCdKey(request));
+    public BaseResponse<Boolean> useCdKey(HttpServletRequest  request,String cdKey) {
+        return ResultUtils.success(accessKeyService.useCdKey(request,cdKey));
     }
 
 }
