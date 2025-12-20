@@ -1,18 +1,20 @@
 package com.dream.codegenerate.utils;
 
-import cn.hutool.core.lang.TypeReference;
+
+
+
+
 import cn.hutool.json.JSONUtil;
 import com.dream.codegenerate.constant.AppConstant;
 import com.dream.codegenerate.exception.BusinessException;
 import com.dream.codegenerate.exception.ErrorCode;
-import com.dream.codegenerate.exception.ThrowUtils;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -20,7 +22,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Stream;
 
-@Slf4j
+@CustomLog
 @Component
 public class ProjectPackagerUtil {
 
@@ -37,7 +39,7 @@ public class ProjectPackagerUtil {
     public String packProjectToJson(String projectRootPath) {
         Path root = Paths.get(projectRootPath);
         if (!Files.exists(root) || !Files.isDirectory(root)) {
-            throw new BusinessException(ErrorCode.NOT_FOUND_ERROR, "项目目录不存在: " + projectRootPath);
+            throw new BusinessException(ErrorCode.FILE_NOT_FOUND, "项目目录不存在: " + projectRootPath);
         }
 
         ConcurrentMap<String, String> fileContents = new ConcurrentHashMap<>();

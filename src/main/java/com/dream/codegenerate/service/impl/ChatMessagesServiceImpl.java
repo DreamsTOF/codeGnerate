@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
  * @author dream
  */
 @Service
-@Slf4j
+@CustomLog
 public class ChatMessagesServiceImpl extends ServiceImpl<ChatMessagesMapper, ChatMessagesEntity>  implements ChatMessagesService{
 
     @Resource

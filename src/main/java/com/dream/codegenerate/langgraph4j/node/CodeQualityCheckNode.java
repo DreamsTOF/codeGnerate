@@ -19,7 +19,7 @@ import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 /**
  * 代码质量检查节点
  */
-@Slf4j
+@CustomLog
 public class CodeQualityCheckNode {
 
     public static AsyncNodeAction<MessagesState<String>> create() {

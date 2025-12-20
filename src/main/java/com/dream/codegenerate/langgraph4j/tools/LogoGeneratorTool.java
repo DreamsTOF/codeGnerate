@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * Logo 图片生成工具
  */
-@Slf4j
+@CustomLog
 @Component
 public class LogoGeneratorTool {
 

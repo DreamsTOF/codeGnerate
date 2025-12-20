@@ -17,7 +17,7 @@ import org.springframework.context.annotation.Scope;
  *
  * @author yupi
  */
-@Slf4j
+@CustomLog
 @Configuration
 public class AiCodeGenTypeRoutingServiceFactory {
 

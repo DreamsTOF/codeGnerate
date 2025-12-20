@@ -198,7 +198,7 @@ yu-ai-code-mother/
 
 ### 日志记录
 
-- 使用 `@Slf4j` 注解代替 `System.out.println`
+- 使用 `@CustomLog` 注解代替 `System.out.println`
 
 ## 七、编码原则总结
 

@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * 图片收集工具（插画图片）
  */
-@Slf4j
+@CustomLog
 @Component
 public class UndrawIllustrationTool {
 

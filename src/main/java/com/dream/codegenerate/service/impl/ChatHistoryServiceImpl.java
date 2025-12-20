@@ -7,7 +7,7 @@ import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import com.dream.codegenerate.constant.UserConstant;
 import com.dream.codegenerate.exception.ErrorCode;
-import com.dream.codegenerate.exception.ThrowUtils;
+import com.dream.codegenerate.utils.ThrowUtils;
 import com.dream.codegenerate.model.dto.chathistory.ChatHistoryQueryRequest;
 import com.dream.codegenerate.model.entity.App;
 import com.dream.codegenerate.model.entity.ChatHistory;
@@ -19,7 +19,6 @@ import com.dream.codegenerate.service.ChatHistoryService;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.memory.ChatMemory;
-import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -34,7 +33,7 @@ import java.util.List;
  *
  */
 @Service
-@Slf4j
+@CustomLog
 public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatHistory> implements ChatHistoryService {
 
     @Resource

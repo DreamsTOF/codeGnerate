@@ -15,7 +15,7 @@ import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 /**
  * 提示词增强工作节点
  */
-@Slf4j
+@CustomLog
 public class PromptEnhancerNode {
 
     public static AsyncNodeAction<MessagesState<String>> create() {

@@ -11,7 +11,7 @@ import reactor.core.publisher.Flux;
  * 简单文本流处理器
  * 处理 HTML 和 MULTI_FILE 类型的流式响应
  */
-@Slf4j
+@CustomLog
 public class SimpleTextStreamHandler {
 
 

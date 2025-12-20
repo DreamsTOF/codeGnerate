@@ -1,4 +1,7 @@
-package com.dream.codegenerate.exception;
+package com.dream.codegenerate.utils;
+
+import com.dream.codegenerate.exception.BusinessException;
+import com.dream.codegenerate.exception.ErrorCode;
 
 public class ThrowUtils {
 

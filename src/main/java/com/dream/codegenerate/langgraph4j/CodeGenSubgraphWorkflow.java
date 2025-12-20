@@ -18,7 +18,7 @@ import static org.bsc.langgraph4j.StateGraph.END;
 import static org.bsc.langgraph4j.StateGraph.START;
 import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
 
-@Slf4j
+@CustomLog
 public class CodeGenSubgraphWorkflow {
 
     /**

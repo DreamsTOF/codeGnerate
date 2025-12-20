@@ -1,7 +1,8 @@
 package com.dream.codegenerate.generator;
 
-import cn.hutool.core.lang.Dict;
-import cn.hutool.setting.yaml.YamlUtil;
+
+import cn.hutool.v7.core.map.Dict;
+import cn.hutool.v7.setting.yaml.YamlUtil;
 import com.mybatisflex.codegen.Generator;
 import com.mybatisflex.codegen.config.GlobalConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -31,7 +32,7 @@ public class MyBatisCodeGenerator {
 
         // 创建配置内容
         GlobalConfig globalConfig = createGlobalConfig();
-
+        globalConfig.getStrategyConfig().setGenerateSchema(true);
         // 通过 datasource 和 globalConfig 创建代码生成器
         Generator generator = new Generator(dataSource, globalConfig);
 

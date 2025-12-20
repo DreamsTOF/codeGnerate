@@ -17,7 +17,7 @@ import com.dream.codegenerate.core.builder.VueProjectBuilder;
 import com.dream.codegenerate.core.handler.StreamHandlerExecutor;
 import com.dream.codegenerate.exception.BusinessException;
 import com.dream.codegenerate.exception.ErrorCode;
-import com.dream.codegenerate.exception.ThrowUtils;
+import com.dream.codegenerate.utils.ThrowUtils;
 import com.dream.codegenerate.model.dto.app.AppAddRequest;
 import com.dream.codegenerate.model.dto.app.AppQueryRequest;
 import com.dream.codegenerate.model.entity.App;
@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
  * dream
  */
 @Service
-@Slf4j
+@CustomLog
 public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppService {
 
     @Value("${code.deploy-host:http://localhost}")

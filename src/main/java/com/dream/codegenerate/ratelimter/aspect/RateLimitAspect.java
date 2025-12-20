@@ -28,7 +28,7 @@ import java.time.Duration;
  */
 @Aspect
 @Component
-@Slf4j
+@CustomLog
 public class RateLimitAspect {
 
     @Resource

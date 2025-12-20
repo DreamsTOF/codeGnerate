@@ -14,7 +14,7 @@ import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 /**
  * 图片汇总节点
  */
-@Slf4j
+@CustomLog
 public class ImageAggregatorNode {
 
     public static AsyncNodeAction<MessagesState<String>> create() {

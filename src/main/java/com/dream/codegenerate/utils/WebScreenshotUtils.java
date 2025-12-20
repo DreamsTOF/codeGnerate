@@ -33,7 +33,7 @@ import java.util.UUID;
 /**
  * 截图工具类（使用WebDriver对象池）
  */
-@Slf4j
+@CustomLog
 @Component // 改为Spring Bean，方便管理生命周期
 public class WebScreenshotUtils {
 

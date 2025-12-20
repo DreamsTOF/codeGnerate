@@ -9,7 +9,7 @@ import com.dream.codegenerate.common.ResultUtils;
 import com.dream.codegenerate.constant.UserConstant;
 import com.dream.codegenerate.exception.BusinessException;
 import com.dream.codegenerate.exception.ErrorCode;
-import com.dream.codegenerate.exception.ThrowUtils;
+import com.dream.codegenerate.utils.ThrowUtils;
 import com.dream.codegenerate.model.dto.user.*;
 import com.dream.codegenerate.model.vo.LoginUserVO;
 import com.dream.codegenerate.model.vo.UserVO;
@@ -21,7 +21,6 @@ import com.dream.codegenerate.model.entity.User;
 import com.dream.codegenerate.service.UserService;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 

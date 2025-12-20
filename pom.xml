@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>cn.dreamtof</groupId>
-    <artifactId>codeGnerate</artifactId>
+    <artifactId>codeGnerate-hutool-V7</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>codeGnerate</name>
     <description>codeGnerate</description>
@@ -27,7 +27,7 @@
         <url/>
     </scm>
     <properties>
-        <java.version>21</java.version>
+        <java.version>25</java.version>
         <langchain4j.version>1.1.0-beta7</langchain4j.version>
 <!--        <langchain4j.version> 1.5.0-beta11</langchain4j.version>-->
     </properties>
@@ -156,6 +156,11 @@
             <version>1.11.1</version>
         </dependency>
         <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>transmittable-thread-local</artifactId>
+            <version>2.14.5</version>
+        </dependency>
+        <dependency>
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
             <version>4.0.3</version>
@@ -163,7 +168,7 @@
         <dependency>
             <groupId>cn.hutool</groupId>
             <artifactId>hutool-all</artifactId>
-            <version>5.8.38</version>
+            <version>5.8.42</version>
         </dependency>
         <dependency>
             <groupId>com.github.xiaoymin</groupId>

@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * Mermaid 架构图生成工具
  */
-@Slf4j
+@CustomLog
 @Component
 public class MermaidDiagramTool {
 

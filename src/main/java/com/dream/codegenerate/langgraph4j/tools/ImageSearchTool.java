@@ -19,7 +19,7 @@ import java.util.List;
 /**
  * 图片搜索工具（根据关键词搜索内容图片）
  */
-@Slf4j
+@CustomLog
 @Component
 public class ImageSearchTool {
 

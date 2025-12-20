@@ -1,13 +1,16 @@
 package com.dream.codegenerate.exception;
 
 import lombok.Getter;
-
+/**
+ * 自定义业务异常
+ * <p>
+ * 职责：Service 层手动抛出的逻辑错误载体。
+ * 它可以只传 ErrorCode，也可以覆盖 ErrorCode 的默认 message。
+ * </p>
+ */
 @Getter
-public class BusinessException extends RuntimeException{
+public class BusinessException extends RuntimeException {
 
-    /**
-     * 错误码
-     */
     private final int code;
 
     public BusinessException(int code, String message) {

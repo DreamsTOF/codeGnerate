@@ -10,7 +10,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * 代码质量检查服务工厂
  */
-@Slf4j
+@CustomLog
 @Configuration
 public class CodeQualityCheckServiceFactory {
 

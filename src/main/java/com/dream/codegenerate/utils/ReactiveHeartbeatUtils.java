@@ -1,5 +1,6 @@
 package com.dream.codegenerate.utils;
 
+import lombok.CustomLog;
 import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
 
@@ -16,6 +17,7 @@ import java.util.Objects;
  * @version 2.0
  * @since Java 21
  */
+@CustomLog
 public final class ReactiveHeartbeatUtils {
 
     private static final Duration DEFAULT_HEARTBEAT_INTERVAL = Duration.ofSeconds(30);

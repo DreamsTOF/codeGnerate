@@ -1,9 +1,7 @@
 package com.dream.codegenerate.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.lang.TypeReference;
 import cn.hutool.core.util.ObjUtil;
-import cn.hutool.json.JSONUtil;
 import com.dream.codegenerate.constant.AppConstant;
 import com.dream.codegenerate.core.builder.BuildResult;
 import com.dream.codegenerate.core.builder.VueProjectBuilder;
@@ -24,7 +22,7 @@ import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import com.dream.codegenerate.constant.UserConstant;
 import com.dream.codegenerate.exception.ErrorCode;
-import com.dream.codegenerate.exception.ThrowUtils;
+import com.dream.codegenerate.utils.ThrowUtils;
 import com.dream.codegenerate.model.dto.appVersion.AppVersionQueryRequest;
 import com.dream.codegenerate.model.entity.App;
 import com.dream.codegenerate.model.entity.AppVersion;
@@ -34,8 +32,8 @@ import com.dream.codegenerate.model.vo.appVersion.AppVersionQueryVO;
 import com.dream.codegenerate.service.AppService;
 import com.dream.codegenerate.service.AppVersionService;
 import jakarta.annotation.Resource;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -43,8 +41,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -52,7 +48,6 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.dream.codegenerate.constant.AppConstant.EXCLUDED_FOLDERS;
 import static com.dream.codegenerate.model.entity.table.AppVersionTableDef.APP_VERSION;
 import static com.mybatisflex.core.query.QueryMethods.ifNull;
 
@@ -62,7 +57,7 @@ import static com.mybatisflex.core.query.QueryMethods.ifNull;
  * dream
  */
 @Service
-@Slf4j
+@CustomLog
 public class AppVersionServiceImpl extends ServiceImpl<AppVersionMapper, AppVersion>  implements AppVersionService{
 
     @Resource
@@ -108,7 +103,7 @@ public class AppVersionServiceImpl extends ServiceImpl<AppVersionMapper, AppVers
         Long chatHistoryId = lastHistory == null ? null : lastHistory.getId();
 
 
-        ThrowUtils.throwIf(lastHistory == null, ErrorCode.NOT_FOUND_ERROR, "未找到该应用的最新对话");
+        ThrowUtils.throwIf(lastHistory == null, ErrorCode.DATA_NOT_FOUND, "未找到该应用的最新对话");
         if (latestVersion != null) {
             ThrowUtils.throwIf(chatHistoryId <= latestVersion.getChatHistoryId(), ErrorCode.PARAMS_ERROR, "当前版本已保存，请勿多次保存");
         }
@@ -140,7 +135,7 @@ public class AppVersionServiceImpl extends ServiceImpl<AppVersionMapper, AppVers
 
         if (!result || newAppVersion.getId() == null) {
             log.error("自动创建应用版本失败, appId: {}", appId);
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "创建版本失败");
+            throw new BusinessException(ErrorCode.CLONE_ERROR, "创建版本失败");
         }
         Long newVersionId = newAppVersion.getId();
         app.setCurrentVersion(newVersionId);

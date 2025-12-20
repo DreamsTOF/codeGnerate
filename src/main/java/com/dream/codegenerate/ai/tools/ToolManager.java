@@ -12,7 +12,7 @@ import java.util.Map;
  * 工具管理器
  * 统一管理所有工具，提供根据名称获取工具的功能
  */
-@Slf4j
+@CustomLog
 @Component
 public class ToolManager {
 
