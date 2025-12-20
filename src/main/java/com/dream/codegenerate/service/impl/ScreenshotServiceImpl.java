@@ -3,7 +3,7 @@ package com.dream.codegenerate.service.impl;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import com.dream.codegenerate.exception.ErrorCode;
-import com.dream.codegenerate.exception.ThrowUtils;
+import com.dream.codegenerate.utils.ThrowUtils;
 import com.dream.codegenerate.manager.CosManager;
 import com.dream.codegenerate.service.ScreenshotService;
 import com.dream.codegenerate.utils.WebScreenshotUtils;
@@ -17,7 +17,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @Service
-@Slf4j
+@CustomLog
 public class ScreenshotServiceImpl implements ScreenshotService {
 
     @Resource

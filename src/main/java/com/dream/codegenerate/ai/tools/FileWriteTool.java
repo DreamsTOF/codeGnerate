@@ -21,7 +21,7 @@ import java.nio.file.StandardOpenOption;
  * 文件写入工具
  * 支持 AI 通过工具调用的方式写入文件
  */
-@Slf4j
+@CustomLog
 @Component
 public class FileWriteTool extends BaseTool {
 

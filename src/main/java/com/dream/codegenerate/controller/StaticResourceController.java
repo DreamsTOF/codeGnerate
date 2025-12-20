@@ -4,7 +4,7 @@ import com.dream.codegenerate.common.BaseResponse;
 import com.dream.codegenerate.common.ResultUtils;
 import com.dream.codegenerate.constant.AppConstant;
 import com.dream.codegenerate.exception.ErrorCode;
-import com.dream.codegenerate.exception.ThrowUtils;
+import com.dream.codegenerate.utils.ThrowUtils;
 import com.dream.codegenerate.model.dto.staticFile.StaticFilesListRequest;
 import com.dream.codegenerate.model.enums.CodeGenTypeEnum;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,7 +24,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -33,7 +32,7 @@ import java.util.stream.Stream;
  */
 @RestController
 @RequestMapping("/static")
-@Slf4j
+@CustomLog
 public class StaticResourceController {
 
     // 应用生成根目录（用于浏览）

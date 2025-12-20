@@ -15,7 +15,7 @@ import reactor.core.publisher.Flux;
  * 1. Flux<ServerSentEvent<String>> 流（HTML、MULTI_FILE） -> SimpleTextStreamHandler
  * 2. TokenStream 格式的复杂流（VUE_PROJECT） -> JsonMessageStreamHandler
  */
-@Slf4j
+@CustomLog
 @Component
 public class StreamHandlerExecutor {
 

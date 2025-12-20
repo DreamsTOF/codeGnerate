@@ -13,7 +13,7 @@ import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 /**
  * 智能路由工作节点
  */
-@Slf4j
+@CustomLog
 public class RouterNode {
 
     public static AsyncNodeAction<MessagesState<String>> create() {

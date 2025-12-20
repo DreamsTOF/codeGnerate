@@ -14,7 +14,7 @@ import java.util.List;
 
 import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 
-@Slf4j
+@CustomLog
 public class DiagramCollectorNode {
 
     public static AsyncNodeAction<MessagesState<String>> create() {

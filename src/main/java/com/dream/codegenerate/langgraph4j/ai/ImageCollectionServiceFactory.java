@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 /**
  * 图片收集服务工厂
  */
-@Slf4j
+@CustomLog
 @Configuration
 public class ImageCollectionServiceFactory {
 

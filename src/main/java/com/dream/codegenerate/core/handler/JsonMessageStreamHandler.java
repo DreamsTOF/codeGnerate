@@ -23,7 +23,7 @@ import java.util.Set;
  * JSON 消息流处理器
  * 处理 VUE_PROJECT 类型的复杂流式响应，包含工具调用信息
  */
-@Slf4j
+@CustomLog
 @Component
 public class JsonMessageStreamHandler {
 

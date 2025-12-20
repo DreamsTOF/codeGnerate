@@ -22,7 +22,7 @@ import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 /**
  * 图片收集节点（并发）
  */
-@Slf4j
+@CustomLog
 public class ImageCollectorNode {
 
     public static AsyncNodeAction<MessagesState<String>> create() {

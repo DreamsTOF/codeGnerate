@@ -18,7 +18,7 @@ import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 /**
  * 项目构建节点
  */
-@Slf4j
+@CustomLog
 public class ProjectBuilderNode {
 
     public static AsyncNodeAction<MessagesState<String>> create() {

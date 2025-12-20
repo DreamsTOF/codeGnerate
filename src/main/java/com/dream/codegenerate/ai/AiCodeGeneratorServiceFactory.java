@@ -38,7 +38,7 @@ import java.time.Duration;
  * AI 服务创建工厂
  */
 @Configuration
-@Slf4j
+@CustomLog
 public class AiCodeGeneratorServiceFactory {
 
     @Resource(name = "openAiChatModel")

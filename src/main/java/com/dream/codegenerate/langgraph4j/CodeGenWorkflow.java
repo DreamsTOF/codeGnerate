@@ -27,7 +27,7 @@ import static org.bsc.langgraph4j.action.AsyncEdgeAction.edge_async;
 /**
  * 代码生成工作流（实际可用）
  */
-@Slf4j
+@CustomLog
 public class CodeGenWorkflow {
 
     /**

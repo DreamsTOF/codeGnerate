@@ -1,8 +1,6 @@
 package com.dream.codegenerate.core.builder;
 
 import cn.hutool.core.util.RuntimeUtil;
-import com.dream.codegenerate.exception.ErrorCode;
-import com.dream.codegenerate.exception.ThrowUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -18,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * 构建 Vue 项目
  */
-@Slf4j
+@CustomLog
 @Component
 public class VueProjectBuilder {
 

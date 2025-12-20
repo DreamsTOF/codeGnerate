@@ -4,7 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.core.util.ZipUtil;
 import com.dream.codegenerate.exception.BusinessException;
 import com.dream.codegenerate.exception.ErrorCode;
-import com.dream.codegenerate.exception.ThrowUtils;
+import com.dream.codegenerate.utils.ThrowUtils;
 import com.dream.codegenerate.service.ProjectDownloadService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +18,7 @@ import java.nio.file.Path;
 import java.util.Set;
 
 @Service
-@Slf4j
+@CustomLog
 public class ProjectDownloadServiceImpl implements ProjectDownloadService {
 
     /**

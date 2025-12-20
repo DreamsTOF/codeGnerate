@@ -9,7 +9,7 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>cn.dreamtof</groupId>
-    <artifactId>codeGnerate</artifactId>
+    <artifactId>codeGnerate-hutool-V7</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>codeGnerate</name>
     <description>codeGnerate</description>
@@ -27,7 +27,7 @@
         <url/>
     </scm>
     <properties>
-        <java.version>21</java.version>
+        <java.version>25</java.version>
         <langchain4j.version>1.1.0-beta7</langchain4j.version>
 <!--        <langchain4j.version> 1.5.0-beta11</langchain4j.version>-->
     </properties>
@@ -139,6 +139,8 @@
             <artifactId>cos_api</artifactId>
             <version>5.6.227</version>
         </dependency>
+
+
         <!-- 本地缓存 -->
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
@@ -148,7 +150,7 @@
         <dependency>
             <groupId>com.mybatis-flex</groupId>
             <artifactId>mybatis-flex-spring-boot3-starter</artifactId>
-            <version>1.11.1</version>
+            <version>1.11.4</version>
         </dependency>
         <dependency>
             <groupId>com.mybatis-flex</groupId>
@@ -161,9 +163,9 @@
             <version>4.0.3</version>
         </dependency>
         <dependency>
-            <groupId>cn.hutool</groupId>
+            <groupId>cn.hutool.v7</groupId>
             <artifactId>hutool-all</artifactId>
-            <version>5.8.38</version>
+            <version>7.0.0-M3</version>
         </dependency>
         <dependency>
             <groupId>com.github.xiaoymin</groupId>

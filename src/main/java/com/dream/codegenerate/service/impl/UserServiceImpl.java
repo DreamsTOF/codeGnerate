@@ -53,7 +53,7 @@ import static com.dream.codegenerate.constant.UserConstant.USER_LOGIN_STATE;
  *
  */
 @Service
-@Slf4j
+@CustomLog
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService {
 
 

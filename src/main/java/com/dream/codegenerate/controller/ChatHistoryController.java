@@ -7,7 +7,7 @@ import com.dream.codegenerate.common.BaseResponse;
 import com.dream.codegenerate.common.ResultUtils;
 import com.dream.codegenerate.constant.UserConstant;
 import com.dream.codegenerate.exception.ErrorCode;
-import com.dream.codegenerate.exception.ThrowUtils;
+import com.dream.codegenerate.utils.ThrowUtils;
 import com.dream.codegenerate.model.dto.chathistory.ChatHistoryQueryRequest;
 import com.dream.codegenerate.model.entity.ChatHistory;
 import com.dream.codegenerate.model.entity.User;
@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 /**
  * 对话历史 控制层。
  *
- *  
+ *
  */
 @RestController
 @RequestMapping("/chatHistory")

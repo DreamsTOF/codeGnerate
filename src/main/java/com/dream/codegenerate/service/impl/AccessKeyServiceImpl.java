@@ -2,7 +2,7 @@ package com.dream.codegenerate.service.impl;
 
 import com.dream.codegenerate.exception.BusinessException;
 import com.dream.codegenerate.exception.ErrorCode;
-import com.dream.codegenerate.exception.ThrowUtils;
+import com.dream.codegenerate.utils.ThrowUtils;
 import com.dream.codegenerate.model.entity.AccessKey;
 import com.dream.codegenerate.model.entity.User;
 import com.dream.codegenerate.model.vo.AccessKeyVo;
@@ -91,9 +91,9 @@ public class AccessKeyServiceImpl extends ServiceImpl<AccessKeyMapper, AccessKey
         AccessKey existingKey = this.getOne(userKeyQuery);
         // 如果 existingKey 不为 null 且 cdKey 字段有内容，则说明已使用
         ThrowUtils.throwIf(existingKey != null && existingKey.getIsUse()!=0,
-                ErrorCode.OPERATION_ERROR, "您已经使用过兑换码，请勿重复使用");
+                ErrorCode.OPERATION_FAILED, "您已经使用过兑换码，请勿重复使用");
         ThrowUtils.throwIf(!cdKey.equals(existingKey.getCdKey()) ,
-                ErrorCode.OPERATION_ERROR, "无效的兑换码");
+                ErrorCode.OPERATION_FAILED, "无效的兑换码");
         // 5. 将这个兑换码分配给当前用户
         // 使用 MyBatis-Flex 的 UpdateChain，代码更优雅
         boolean updateResult = UpdateChain.of(AccessKey.class)
@@ -104,7 +104,7 @@ public class AccessKeyServiceImpl extends ServiceImpl<AccessKeyMapper, AccessKey
         // 6. 检查更新是否成功
         if (!updateResult) {
             // 如果更新失败，可能意味着在极端的并发情况下出现了问题，回滚事务
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "兑换码分配失败，请稍后重试");
+            throw new BusinessException(ErrorCode.OPERATION_FAILED, "兑换码分配失败，请稍后重试");
         }
         UpdateTokenRequest updateTokenRequest = new UpdateTokenRequest();
         updateTokenRequest.setName(String.valueOf(userId));

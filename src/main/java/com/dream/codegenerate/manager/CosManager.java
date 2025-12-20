@@ -18,7 +18,7 @@ import java.util.List;
  * COS 对象存储管理器
  */
 @Component
-@Slf4j
+@CustomLog
 public class CosManager {
 
     @Resource

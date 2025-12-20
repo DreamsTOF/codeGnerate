@@ -32,7 +32,7 @@ import java.util.Set;
  * AI 代码生成门面类，组合代码生成和保存功能
  */
 @Service
-@Slf4j
+@CustomLog
 public class AiCodeGeneratorFacade {
 
 

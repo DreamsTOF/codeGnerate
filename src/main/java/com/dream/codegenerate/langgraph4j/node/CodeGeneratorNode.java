@@ -20,7 +20,7 @@ import static org.bsc.langgraph4j.action.AsyncNodeAction.node_async;
 /**
  * 网站代码生成节点
  */
-@Slf4j
+@CustomLog
 public class CodeGeneratorNode {
 
     public static AsyncNodeAction<MessagesState<String>> create() {
