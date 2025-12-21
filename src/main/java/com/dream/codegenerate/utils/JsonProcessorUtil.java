@@ -1,8 +1,9 @@
 package com.dream.codegenerate.utils;
 
-import cn.hutool.json.JSONArray;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
+
+import cn.hutool.v7.json.JSONArray;
+import cn.hutool.v7.json.JSONObject;
+import cn.hutool.v7.json.JSONUtil;
 
 /**
  * Classname ToolRequestProcessorUtil
@@ -60,7 +61,7 @@ public class JsonProcessorUtil {
                     argumentsJson.put("content", truncatedContent);
 
                     // 将修改后的 arguments 对象更新回 toolCall
-                    toolCall.set("arguments", argumentsJson.toString());
+                    toolCall.append("arguments", argumentsJson.toString());
                 }
             }
             return toolCalls.toString();

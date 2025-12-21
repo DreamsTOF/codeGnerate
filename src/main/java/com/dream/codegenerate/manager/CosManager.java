@@ -1,12 +1,13 @@
 package com.dream.codegenerate.manager;
 
-import cn.hutool.core.io.FileUtil;
+
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.model.PutObjectRequest;
 import com.qcloud.cos.model.PutObjectResult;
 import com.dream.codegenerate.config.CosClientConfig;
 import com.qcloud.cos.model.ciModel.persistence.PicOperations;
 import jakarta.annotation.Resource;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

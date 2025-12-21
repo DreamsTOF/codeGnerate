@@ -1,7 +1,8 @@
 package com.dream.codegenerate.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.StrUtil;
+
+import cn.hutool.v7.core.collection.CollUtil;
+import cn.hutool.v7.core.text.StrUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
@@ -20,6 +21,8 @@ import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.memory.ChatMemory;
 import jakarta.annotation.Resource;
+import kotlin.jvm.internal.Lambda;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -64,6 +67,7 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
 
     @Override
     public boolean deleteByAppId(Long appId) {
+
         ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用ID不能为空");
         QueryWrapper queryWrapper = QueryWrapper.create()
                 .eq("appId", appId);
@@ -134,6 +138,7 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
      */
     @Override
     public QueryWrapper getQueryWrapper(ChatHistoryQueryRequest chatHistoryQueryRequest) {
+        
         QueryWrapper queryWrapper = QueryWrapper.create();
         if (chatHistoryQueryRequest == null) {
             return queryWrapper;

@@ -1,4 +1,4 @@
-package com.dream.codegenerate.exception;
+package com.dream.codegenerate.utils.autoAudit;
 
 
 import cn.hutool.v7.core.data.id.IdUtil;
@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.CustomLog;
+import lombok.Getter;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
@@ -96,12 +97,12 @@ public class OperationLogAspect {
         return ip != null && ip.contains(",") ? ip.split(",")[0] : ip;
     }
 
+    @Getter
     private static class ThrowableWrapper extends RuntimeException {
         private final Throwable original;
         public ThrowableWrapper(Throwable original) {
             super(null, original, false, false);
             this.original = original;
         }
-        public Throwable getOriginal() { return original; }
     }
 }

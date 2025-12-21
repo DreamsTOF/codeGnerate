@@ -29,6 +29,7 @@ import com.dream.codegenerate.model.vo.AppVO;
 import com.dream.codegenerate.model.vo.UserVO;
 import dev.langchain4j.data.message.UserMessage;
 import jakarta.annotation.Resource;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -125,6 +126,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         app.setAppName(initPrompt.substring(0, Math.min(initPrompt.length(), 8)));
         //获取apikey
         String apiKey = accessKeyService.getApiKey(loginUser.getId());
+
+
         // 使用 AI 智能选择代码生成类型（多例模式）
         AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService = aiCodeGenTypeRoutingServiceFactory.createAiCodeGenTypeRoutingService(apiKey);
         CodeGenTypeEnum selectedCodeGenType = aiCodeGenTypeRoutingService.routeCodeGenType(initPrompt);
