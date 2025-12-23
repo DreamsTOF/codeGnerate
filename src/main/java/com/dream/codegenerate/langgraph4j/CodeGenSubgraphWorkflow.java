@@ -7,6 +7,7 @@ import com.dream.codegenerate.langgraph4j.node.*;
 import com.dream.codegenerate.langgraph4j.node.concurrent.*;
 import com.dream.codegenerate.langgraph4j.state.WorkflowContext;
 import com.dream.codegenerate.model.enums.CodeGenTypeEnum;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
 import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
@@ -31,7 +32,7 @@ public class CodeGenSubgraphWorkflow {
                     .addEdge(START, "content_collect")
                     .addEdge("content_collect", END);
         } catch (GraphStateException e) {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "内容图片子图创建失败");
+            throw new BusinessException(ErrorCode.DATA_SCOPE_ERROR, "内容图片子图创建失败");
         }
     }
 
@@ -45,7 +46,7 @@ public class CodeGenSubgraphWorkflow {
                     .addEdge(START, "illustration_collect")
                     .addEdge("illustration_collect", END);
         } catch (GraphStateException e) {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "插画子图创建失败");
+            throw new BusinessException(ErrorCode.DATA_NOT_FOUND, "插画子图创建失败");
         }
     }
 
@@ -59,7 +60,7 @@ public class CodeGenSubgraphWorkflow {
                     .addEdge(START, "diagram_generate")
                     .addEdge("diagram_generate", END);
         } catch (GraphStateException e) {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "架构图子图创建失败");
+            throw new BusinessException(ErrorCode.DATA_NOT_FOUND, "架构图子图创建失败");
         }
     }
 
@@ -73,7 +74,7 @@ public class CodeGenSubgraphWorkflow {
                     .addEdge(START, "logo_generate")
                     .addEdge("logo_generate", END);
         } catch (GraphStateException e) {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "Logo子图创建失败");
+            throw new BusinessException(ErrorCode.DATA_NOT_FOUND, "Logo子图创建失败");
         }
     }
 
@@ -139,7 +140,7 @@ public class CodeGenSubgraphWorkflow {
 
                     .compile();
         } catch (GraphStateException e) {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "子图工作流创建失败");
+            throw new BusinessException(ErrorCode.DATA_NOT_FOUND, "子图工作流创建失败");
         }
     }
 

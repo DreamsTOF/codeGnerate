@@ -1,8 +1,9 @@
 package com.dream.codegenerate.controller;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONUtil;
+
+import cn.hutool.v7.core.bean.BeanUtil;
+import cn.hutool.v7.core.text.StrUtil;
+import cn.hutool.v7.json.JSONUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.dream.codegenerate.annotation.AuthCheck;
@@ -141,11 +142,11 @@ public class AppController {
         ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用ID无效");
         // 2. 查询应用信息
         App app = appService.getById(appId);
-        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        ThrowUtils.throwIf(app == null, ErrorCode.DATA_NOT_FOUND, "应用不存在");
         // 3. 权限校验：只有应用创建者可以下载代码
         User loginUser = userService.getLoginUser(request);
         if (!app.getUserId().equals(loginUser.getId())) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限下载该应用代码");
+            throw new BusinessException(ErrorCode.DATA_NOT_FOUND, "无权限下载该应用代码");
         }
         // 4. 构建应用代码目录路径（生成目录，非部署目录）
         String codeGenType = app.getCodeGenType();
@@ -154,7 +155,7 @@ public class AppController {
         // 5. 检查代码目录是否存在
         File sourceDir = new File(sourceDirPath);
         ThrowUtils.throwIf(!sourceDir.exists() || !sourceDir.isDirectory(),
-                ErrorCode.NOT_FOUND_ERROR, "应用代码不存在，请先生成代码");
+                ErrorCode.DATA_NOT_FOUND, "应用代码不存在，请先生成代码");
         // 6. 生成下载文件名（不建议添加中文内容）
         String downloadFileName = String.valueOf(appId);
         // 7. 调用通用下载服务
@@ -193,10 +194,10 @@ public class AppController {
         long id = appUpdateRequest.getId();
         // 判断是否存在
         App oldApp = appService.getById(id);
-        ThrowUtils.throwIf(oldApp == null, ErrorCode.NOT_FOUND_ERROR);
+        ThrowUtils.throwIf(oldApp == null, ErrorCode.DATA_NOT_FOUND);
         // 仅本人可更新
         if (!oldApp.getUserId().equals(loginUser.getId())) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+            throw new BusinessException(ErrorCode.DATA_NOT_FOUND);
         }
         App app = new App();
         app.setId(id);
@@ -204,7 +205,7 @@ public class AppController {
         // 设置编辑时间
         app.setEditTime(LocalDateTime.now());
         boolean result = appService.updateById(app);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        ThrowUtils.throwIf(!result, ErrorCode.DATA_NOT_FOUND);
         return ResultUtils.success(true);
     }
 
@@ -224,10 +225,10 @@ public class AppController {
         long id = deleteRequest.getId();
         // 判断是否存在
         App oldApp = appService.getById(id);
-        ThrowUtils.throwIf(oldApp == null, ErrorCode.NOT_FOUND_ERROR);
+        ThrowUtils.throwIf(oldApp == null, ErrorCode.DATA_NOT_FOUND);
         // 仅本人或管理员可删除
         if (!oldApp.getUserId().equals(loginUser.getId()) && !UserConstant.ADMIN_ROLE.equals(loginUser.getUserRole())) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+            throw new BusinessException(ErrorCode.DATA_NOT_FOUND);
         }
         boolean result = appService.removeById(id);
         return ResultUtils.success(result);
@@ -244,7 +245,7 @@ public class AppController {
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
         // 查询数据库
         App app = appService.getById(id);
-        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR);
+        ThrowUtils.throwIf(app == null, ErrorCode.DATA_NOT_FOUND);
         // 获取封装类（包含用户信息）
         return ResultUtils.success(appService.getAppVO(app));
     }
@@ -320,7 +321,7 @@ public class AppController {
         long id = deleteRequest.getId();
         // 判断是否存在
         App oldApp = appService.getById(id);
-        ThrowUtils.throwIf(oldApp == null, ErrorCode.NOT_FOUND_ERROR);
+        ThrowUtils.throwIf(oldApp == null, ErrorCode.DATA_NOT_FOUND);
         boolean result = appService.removeById(id);
         return ResultUtils.success(result);
     }
@@ -340,13 +341,13 @@ public class AppController {
         long id = appAdminUpdateRequest.getId();
         // 判断是否存在
         App oldApp = appService.getById(id);
-        ThrowUtils.throwIf(oldApp == null, ErrorCode.NOT_FOUND_ERROR);
+        ThrowUtils.throwIf(oldApp == null, ErrorCode.DATA_NOT_FOUND);
         App app = new App();
         BeanUtil.copyProperties(appAdminUpdateRequest, app);
         // 设置编辑时间
         app.setEditTime(LocalDateTime.now());
         boolean result = appService.updateById(app);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        ThrowUtils.throwIf(!result, ErrorCode.DATA_NOT_FOUND);
         return ResultUtils.success(true);
     }
 
@@ -383,7 +384,7 @@ public class AppController {
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
         // 查询数据库
         App app = appService.getById(id);
-        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR);
+        ThrowUtils.throwIf(app == null, ErrorCode.DATA_NOT_FOUND);
         // 获取封装类
         return ResultUtils.success(appService.getAppVO(app));
     }

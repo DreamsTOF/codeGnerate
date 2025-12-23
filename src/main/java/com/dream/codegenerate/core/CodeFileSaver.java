@@ -1,8 +1,8 @@
 package com.dream.codegenerate.core;
 
-import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.util.IdUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.v7.core.data.id.IdUtil;
+import cn.hutool.v7.core.io.file.FileUtil;
+import cn.hutool.v7.core.text.StrUtil;
 import com.dream.codegenerate.ai.model.HtmlCodeResult;
 import com.dream.codegenerate.ai.model.MultiFileCodeResult;
 import com.dream.codegenerate.model.enums.CodeGenTypeEnum;

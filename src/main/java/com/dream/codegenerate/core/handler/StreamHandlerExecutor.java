@@ -4,6 +4,7 @@ import com.dream.codegenerate.model.entity.User;
 import com.dream.codegenerate.model.enums.CodeGenTypeEnum;
 import com.dream.codegenerate.service.ChatHistoryService;
 import jakarta.annotation.Resource;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.http.codec.ServerSentEvent;

@@ -1,12 +1,13 @@
 package com.dream.codegenerate.utils;
 
-import cn.hutool.core.img.ImgUtil;
-import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.util.RandomUtil;
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.v7.core.io.file.FileUtil;
+import cn.hutool.v7.core.text.StrUtil;
+import cn.hutool.v7.core.util.RandomUtil;
+import cn.hutool.v7.swing.img.ImgUtil;
 import com.dream.codegenerate.exception.BusinessException;
 import com.dream.codegenerate.exception.ErrorCode;
 import jakarta.annotation.PreDestroy;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;

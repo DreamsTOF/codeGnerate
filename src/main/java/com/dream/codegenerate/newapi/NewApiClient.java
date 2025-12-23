@@ -1,8 +1,11 @@
 package com.dream.codegenerate.newapi;
 
 
-import cn.hutool.core.lang.TypeReference;
-import cn.hutool.json.JSONUtil;
+import cn.hutool.v7.core.reflect.TypeReference;
+import cn.hutool.v7.http.HttpUtil;
+import cn.hutool.v7.http.client.Request;
+import cn.hutool.v7.http.meta.Method;
+import cn.hutool.v7.json.JSONUtil;
 import com.dream.codegenerate.newapi.common.ApiResponse;
 import com.dream.codegenerate.newapi.model.tokrn.request.CreateTokenRequest;
 import com.dream.codegenerate.newapi.model.tokrn.request.UpdateTokenRequest;
@@ -11,6 +14,10 @@ import com.dream.codegenerate.newapi.model.tokrn.response.UpdateTokenResponseDat
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
+
+import static cn.hutool.v7.http.meta.HeaderName.AUTHORIZATION;
+import static cn.hutool.v7.http.meta.HeaderName.CONTENT_TYPE;
 
 // 假设这个类是一个Spring Bean，例如用@Service注解
 @Component
@@ -26,7 +33,7 @@ public class NewApiClient {
      * @param request 创建Key的请求参数
      * @return ApiResponse，data部分为null
      */
-    public ApiResponse<Object> createToken(CreateTokenRequest request) {
+    public ApiResponse createToken(CreateTokenRequest request) {
         // 1. 拼接完整URL
         String url = NEW_API_BASE_URL + "/api/token/";
 
@@ -34,16 +41,15 @@ public class NewApiClient {
         String requestBody = JSONUtil.toJsonStr(request);
 
         // 3. 使用Hutool发起POST请求
-        String responseBody = cn.hutool.http.HttpRequest.post(url)
-                .header(cn.hutool.http.Header.CONTENT_TYPE, "application/json")
-                .header(cn.hutool.http.Header.AUTHORIZATION,  NEW_API_TOKEN)
-                .header("New-Api-User", "1")
-                .body(requestBody)
-                .execute()
-                .body();
+        String responseBody = HttpUtil.createPost(url)
+                .header("New-Api-User", "1") // 添加头信息
+                .body(requestBody)           // 设置请求体
+                .send()                   // 执行请求
+                .bodyStr();
+
 
         // 4. 将响应的JSON字符串转换为ApiResponse对象
-        return JSONUtil.toBean(responseBody, new TypeReference<ApiResponse<Object>>() {}, false);
+        return JSONUtil.toBean(responseBody, ApiResponse.class);
     }
 
     /**
@@ -57,17 +63,15 @@ public class NewApiClient {
         String url = NEW_API_BASE_URL + "/api/token/search";
 
         // 2. 使用Hutool发起GET请求
-        String responseBody = cn.hutool.http.HttpRequest.get(url)
-                .header(cn.hutool.http.Header.CONTENT_TYPE, "application/json")
-                .header(cn.hutool.http.Header.AUTHORIZATION, "Bearer " + NEW_API_TOKEN)
+        String responseBody = HttpUtil.createGet(url)
                 .header("New-Api-User", "1")
-                .form("keyword", keyword) // Hutool会自动将参数附加到URL后面
-                .execute()
-                .body();
+                .form(Map.of("keyword", keyword)) // Hutool会自动将参数附加到URL后面
+                .send()
+                .bodyStr();
 
         // 3. 将响应的JSON字符串转换为ApiResponse<TokenInfo>对象
         // 注意这里使用了TypeReference来处理泛型
-        return JSONUtil.toBean(responseBody, new TypeReference<ApiResponse<List<TokenInfo>>>() {}, false);
+        return JSONUtil.toBean(responseBody, ApiResponse.class);
     }
 
     /**
@@ -84,15 +88,15 @@ public class NewApiClient {
         String requestBody = JSONUtil.toJsonStr(request);
 
         // 3. 使用Hutool发起PUT请求
-        String responseBody = cn.hutool.http.HttpRequest.put(url)
-                .header(cn.hutool.http.Header.CONTENT_TYPE, "application/json")
-                .header(cn.hutool.http.Header.AUTHORIZATION, "Bearer " + NEW_API_TOKEN)
+        String responseBody = HttpUtil.createRequest(url, Method.PUT)
+                .header(CONTENT_TYPE, "application/json")
+                .header(AUTHORIZATION, "Bearer " + NEW_API_TOKEN)
                 .header("New-Api-User", "1")
                 .body(requestBody)
-                .execute()
-                .body();
+                .send()
+                .bodyStr();
 
         // 4. 将响应的JSON字符串转换为ApiResponse<UpdateTokenResponseData>对象
-        return JSONUtil.toBean(responseBody, new TypeReference<ApiResponse<UpdateTokenResponseData>>() {}, false);
+        return JSONUtil.toBean(responseBody, ApiResponse.class);
     }
 }

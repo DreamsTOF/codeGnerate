@@ -1,6 +1,7 @@
 package com.dream.codegenerate.log;
 
-import com.dreamtof.log.core.MyLogger;
+
+import com.dream.codegenerate.log.core.MyLogger;
 import org.slf4j.LoggerFactory;
 
 /**

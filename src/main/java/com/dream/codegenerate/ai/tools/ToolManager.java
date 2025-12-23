@@ -2,6 +2,7 @@ package com.dream.codegenerate.ai.tools;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 

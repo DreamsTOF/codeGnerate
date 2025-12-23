@@ -13,28 +13,22 @@ import org.springframework.stereotype.Component;
 import java.io.Serializable;
 
 /**
- * ==================================================================================
- * 🚀 AutoAuditAspect - 自动数据审计“一枪流”版
- * ==================================================================================
- * 借鉴 FlexSmartQuery 的设计哲学：
- * 1. 协议化：通过 @AuditLog 注解定义审计范围。
- * 2. 自动化：利用 TableInfo 和 Mappers 动态定位数据，无需手写业务代码。
- * 3. 零侵入：在 ScopedValue 作用域内自动完成“旧值->执行->新值->对比”全链路。
- * ==================================================================================
+ * AutoAuditAspect - 自动审计“智能降级”版
+ * * 性能哲学：
+ * 1. 两次 IO 基准：默认 1 Select (旧值) + 1 Update。
+ * 2. PG RETURNING 适配：如果方法返回了实体类，优先将其视为“全量新值”以获得最高审计精度。
+ * 3. 智能降级：若无返回值，则将入参视为“增量新值”，开启 partial 模式对比，不增加额外 IO。
  */
 @Aspect
 @Component
 @Slf4j
 public class AutoAuditAspect {
 
-    /**
-     * 核心审计环绕增强
-     */
     @Around("@annotation(auditLog)")
     public Object doAudit(ProceedingJoinPoint joinPoint, AuditLog auditLog) throws Throwable {
         Object[] args = joinPoint.getArgs();
 
-        // 1. 安全校验：无参方法或未指定实体的注解直接跳过
+        // 基本校验
         if (args.length == 0 || auditLog.entity() == Object.class) {
             return joinPoint.proceed();
         }
@@ -43,64 +37,59 @@ public class AutoAuditAspect {
         TableInfo tableInfo = TableInfoFactory.ofEntityClass(entityClass);
         if (tableInfo == null) return joinPoint.proceed();
 
-        // 2. 智能主键定位 (借鉴一枪流的元数据意识)
-        Serializable id = resolveId(args[0], tableInfo);
+        // 1. 获取 ID 与入参快照
+        Object inputParam = args[0];
+        Serializable id = resolveId(inputParam, tableInfo);
         if (id == null) return joinPoint.proceed();
 
-        // 3. 极简 Mapper 获取 (参考 FlexSmartQuery 使用 Mappers 工具类)
+        // 2. 抓取旧值快照 (第 1 次 IO)
         var mapper = Mappers.ofEntityClass(entityClass);
-
-        // 4. 执行“数据快照”对比流程
-        // ---------------------------------------------------------
-        // A. 抓取旧值
         Object oldEntity = mapper.selectOneById(id);
 
-        // B. 执行业务逻辑 (此时仍在 OperationLogAspect 的 ScopedValue 作用域内)
+        // 3. 执行业务更新逻辑 (第 2 次 IO: 数据库 Update)
         Object result = joinPoint.proceed();
 
-        // C. 抓取新值
-        Object newEntity = mapper.selectOneById(id);
+        // 4. 智能识别新值来源 (实现 RETURNING 适配与降级)
+        if (oldEntity != null) {
+            Object newSnapshot;
+            boolean isPartialMode;
 
-        // D. 触发一枪流对比引擎
-        if (oldEntity != null && newEntity != null) {
-            SmartAuditUpdater.copy(oldEntity, newEntity)
+            // 智能判断：如果返回值就是实体类型 (说明触发了 PG RETURNING 协议或 Service 返回了完整新对象)
+            if (entityClass.isInstance(result)) {
+                newSnapshot = result;
+                isPartialMode = false; // 全量对比，精度最高
+            } else {
+                // 降级：将入参视为新值来源
+                newSnapshot = inputParam;
+                isPartialMode = true; // 仅对比入参中被修改的字段
+            }
+
+            // 5. 触发对比引擎
+            SmartAuditUpdater.copy(oldEntity, newSnapshot)
+                    .partial(isPartialMode)
                     .withAction(auditLog.action())
                     .execute();
         }
-        // ---------------------------------------------------------
 
         return result;
     }
 
     /**
      * 智能解析 ID
-     * 逻辑：如果参数是基本类型则视为 ID，如果是对象则利用 TableInfo 获取属性名并提取值
      */
     private Serializable resolveId(Object arg, TableInfo tableInfo) {
         if (arg == null) return null;
-
-        // 场景 1: 参数本身就是 ID (Number 或 String)
-        if ((arg instanceof Number || arg instanceof String)) {
-            return (Serializable)arg;
-        }
-
-        // 场景 2: 参数是实体对象，通过元数据主键列表提取属性名
+        if ((arg instanceof Number || arg instanceof String)) return (Serializable)arg;
         try {
             var pks = tableInfo.getPrimaryKeyList();
             if (pks != null && !pks.isEmpty()) {
-                // 1. 获取主键字段对应的属性名 (如 "id")
                 String propertyName = pks.getFirst().getProperty();
-
-                // 2. 借鉴 FlexSmartQuery 方案：使用 MyBatis 的 SystemMetaObject 提取值
-                // 这种方式比调用 IdInfo.getValue() 更具兼容性
                 Object pkVal = SystemMetaObject.forObject(arg).getValue(propertyName);
-
                 if (pkVal instanceof Serializable s) return s;
             }
         } catch (Exception e) {
-            log.debug("无法从参数中提取主键值: {}", e.getMessage());
+            log.debug("无法提取主键: {}", e.getMessage());
         }
-
         return null;
     }
 }

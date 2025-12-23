@@ -1,12 +1,13 @@
 package com.dream.codegenerate.service.impl;
 
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.core.util.ZipUtil;
+import cn.hutool.v7.core.compress.ZipUtil;
+import cn.hutool.v7.core.text.StrUtil;
 import com.dream.codegenerate.exception.BusinessException;
 import com.dream.codegenerate.exception.ErrorCode;
 import com.dream.codegenerate.utils.ThrowUtils;
 import com.dream.codegenerate.service.ProjectDownloadService;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 

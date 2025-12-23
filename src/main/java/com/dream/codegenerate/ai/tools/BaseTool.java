@@ -1,6 +1,6 @@
 package com.dream.codegenerate.ai.tools;
 
-import cn.hutool.json.JSONObject;
+import cn.hutool.v7.json.JSONObject;
 import com.dream.codegenerate.ai.tools.context.SessionContext;
 import com.dream.codegenerate.ai.tools.context.SessionContextManager;
 import jakarta.annotation.Resource;

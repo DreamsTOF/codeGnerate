@@ -1,8 +1,8 @@
 package com.dream.codegenerate.core.handler;
 
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
+import cn.hutool.v7.core.text.StrUtil;
+import cn.hutool.v7.json.JSONObject;
+import cn.hutool.v7.json.JSONUtil;
 import com.dream.codegenerate.ai.model.message.*;
 import com.dream.codegenerate.ai.tools.BaseTool;
 import com.dream.codegenerate.ai.tools.ToolManager;
@@ -10,6 +10,7 @@ import com.dream.codegenerate.model.entity.User;
 import com.dream.codegenerate.model.enums.ChatHistoryMessageTypeEnum;
 import com.dream.codegenerate.service.ChatHistoryService;
 import jakarta.annotation.Resource;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.http.codec.ServerSentEvent;

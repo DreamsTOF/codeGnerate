@@ -47,11 +47,11 @@ public class AuthInterceptor {
         UserRoleEnum userRoleEnum = UserRoleEnum.getEnumByValue(loginUser.getUserRole());
         // 没有权限，直接拒绝
         if (userRoleEnum == null) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+            throw new BusinessException(ErrorCode.DATA_NOT_FOUND);
         }
         // 要求必须有管理员权限，但当前登录用户没有
         if (UserRoleEnum.ADMIN.equals(mustRoleEnum) && !UserRoleEnum.ADMIN.equals(userRoleEnum)) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR);
+            throw new BusinessException(ErrorCode.DATA_NOT_FOUND);
         }
         // 通过普通用户的权限校验，放行
         return joinPoint.proceed();

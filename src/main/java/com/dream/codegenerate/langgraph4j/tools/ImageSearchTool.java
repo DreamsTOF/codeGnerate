@@ -1,18 +1,18 @@
 package com.dream.codegenerate.langgraph4j.tools;
 
-import cn.hutool.http.HttpRequest;
-import cn.hutool.http.HttpResponse;
-import cn.hutool.json.JSONArray;
-import cn.hutool.json.JSONObject;
-import cn.hutool.json.JSONUtil;
+import cn.hutool.v7.json.JSONArray;
+import cn.hutool.v7.json.JSONObject;
+import cn.hutool.v7.json.JSONUtil;
 import com.dream.codegenerate.langgraph4j.model.ImageResource;
 import com.dream.codegenerate.langgraph4j.model.enums.ImageCategoryEnum;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,28 +33,28 @@ public class ImageSearchTool {
         List<ImageResource> imageList = new ArrayList<>();
         int searchCount = 12;
         // 调用 API，注意释放资源
-        try (HttpResponse response = HttpRequest.get(PEXELS_API_URL)
-                .header("Authorization", pexelsApiKey)
-                .form("query", query)
-                .form("per_page", searchCount)
-                .form("page", 1)
-                .execute()) {
-            if (response.isOk()) {
-                JSONObject result = JSONUtil.parseObj(response.body());
-                JSONArray photos = result.getJSONArray("photos");
-                for (int i = 0; i < photos.size(); i++) {
-                    JSONObject photo = photos.getJSONObject(i);
-                    JSONObject src = photo.getJSONObject("src");
-                    imageList.add(ImageResource.builder()
-                            .category(ImageCategoryEnum.CONTENT)
-                            .description(photo.getStr("alt", query))
-                            .url(src.getStr("medium"))
-                            .build());
-                }
-            }
-        } catch (Exception e) {
-            log.error("Pexels API 调用失败: {}", e.getMessage(), e);
-        }
+//        try (HttpResponse response = HttpRequest.get(PEXELS_API_URL)
+//                .header("Authorization", pexelsApiKey)
+//                .form("query", query)
+//                .form("per_page", searchCount)
+//                .form("page", 1)
+//                .execute()) {
+//            if (response.isOk()) {
+//                JSONObject result = JSONUtil.parseObj(response.body());
+//                JSONArray photos = result.getJSONArray("photos");
+//                for (int i = 0; i < photos.size(); i++) {
+//                    JSONObject photo = photos.getJSONObject(i);
+//                    JSONObject src = photo.getJSONObject("src");
+//                    imageList.add(ImageResource.builder()
+//                            .category(ImageCategoryEnum.CONTENT)
+//                            .description(photo.getStr("alt", query))
+//                            .url(src.getStr("medium"))
+//                            .build());
+//                }
+//            }
+//        } catch (Exception e) {
+//            log.error("Pexels API 调用失败: {}", e.getMessage(), e);
+//        }
         return imageList;
     }
 }

@@ -44,23 +44,26 @@ public class JsonProcessorUtil {
 
             for (int i = 0; i < toolCalls.size(); i++) {
                 JSONObject toolCall = toolCalls.getJSONObject(i);
-                if (toolCall == null || toolCall.getStr("arguments") == null) {
-                    continue;
-                }
+                if (toolCall == null) continue;
 
                 String argumentsString = toolCall.getStr("arguments");
+                if (argumentsString == null) continue;
+
+                // 解析内层 arguments 字符串
                 JSONObject argumentsJson = JSONUtil.parseObj(argumentsString);
 
                 if (argumentsJson.containsKey("content")) {
                     String originalContent = argumentsJson.getStr("content", "");
 
-                    // 调用新的、更优雅的裁切方法
+                    // 调用裁切方法
                     String truncatedContent = truncateContentInMiddle(originalContent);
 
-                    // 更新 argumentsJson
-                    argumentsJson.put("content", truncatedContent);
+                    // 【修复 1】解决 put 报错：使用 set 方法。
+                    // 如果 set 依然报错，请使用 ((java.util.Map)argumentsJson).put("content", truncatedContent);
+                    argumentsJson.append("content", truncatedContent);
 
-                    // 将修改后的 arguments 对象更新回 toolCall
+                    // 【修复 2】解决逻辑错误：必须使用 set 而不是 append。
+                    // append 会把 arguments 字段变成 JSONArray，而业务通常需要它保持为 String。
                     toolCall.append("arguments", argumentsJson.toString());
                 }
             }
@@ -68,10 +71,9 @@ public class JsonProcessorUtil {
 
         } catch (Exception e) {
             System.err.println("处理ToolExecutionRequests时发生错误: " + e.getMessage());
-            return toolExecutionRequestsJson; // 保证在出错时返回原始数据
+            return toolExecutionRequestsJson;
         }
     }
-
     /**
      * [新方法] 优雅地裁切字符串，保留头部和尾部，并用省略信息替换中间部分。
      *

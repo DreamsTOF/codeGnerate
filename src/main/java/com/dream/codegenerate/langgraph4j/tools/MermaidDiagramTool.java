@@ -1,10 +1,10 @@
 package com.dream.codegenerate.langgraph4j.tools;
 
-import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.util.RandomUtil;
-import cn.hutool.core.util.RuntimeUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.system.SystemUtil;
+import cn.hutool.v7.core.io.file.FileUtil;
+import cn.hutool.v7.core.text.StrUtil;
+import cn.hutool.v7.core.util.RandomUtil;
+import cn.hutool.v7.core.util.RuntimeUtil;
+import cn.hutool.v7.core.util.SystemUtil;
 import com.dream.codegenerate.exception.BusinessException;
 import com.dream.codegenerate.exception.ErrorCode;
 import com.dream.codegenerate.langgraph4j.model.ImageResource;
@@ -13,6 +13,7 @@ import com.dream.codegenerate.manager.CosManager;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import jakarta.annotation.Resource;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -69,8 +70,9 @@ public class MermaidDiagramTool {
         // 创建临时输出文件
         File tempOutputFile = FileUtil.createTempFile("mermaid_output_", ".svg", true);
         // 根据操作系统选择命令
-        String command = SystemUtil.getOsInfo().isWindows() ? "mmdc.cmd" : "mmdc";
+//        String command = SystemUtil.getOsInfo().isWindows() ? "mmdc.cmd" : "mmdc";
         // 构建命令
+        String command = "mmdc.cmd";
         String cmdLine = String.format("%s -i %s -o %s -b transparent",
                 command,
                 tempInputFile.getAbsolutePath(),

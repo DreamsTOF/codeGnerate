@@ -1,7 +1,7 @@
 package com.dream.codegenerate.service.impl;
 
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.util.ObjUtil;
+import cn.hutool.v7.core.collection.CollUtil;
+import cn.hutool.v7.core.util.ObjUtil;
 import com.dream.codegenerate.constant.AppConstant;
 import com.dream.codegenerate.core.builder.BuildResult;
 import com.dream.codegenerate.core.builder.VueProjectBuilder;
@@ -177,13 +177,13 @@ public class AppVersionServiceImpl extends ServiceImpl<AppVersionMapper, AppVers
     public Page<AppVersionQueryVO> listByPage(AppVersionQueryRequest appVersionQueryRequest, User loginUser) {
         ThrowUtils.throwIf(appVersionQueryRequest.getAppId() == null || appVersionQueryRequest.getAppId() <= 0, ErrorCode.PARAMS_ERROR, "应用ID不能为空");
         ThrowUtils.throwIf(appVersionQueryRequest.getPageSize() <= 0 || appVersionQueryRequest.getPageSize() > 50, ErrorCode.PARAMS_ERROR, "页面大小必须在1-50之间");
-        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.DATA_NOT_FOUND);
         // 验证权限：只有应用创建者和管理员可以查看
         App app = appService.getById(appVersionQueryRequest.getAppId());
-        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        ThrowUtils.throwIf(app == null, ErrorCode.DATA_NOT_FOUND, "应用不存在");
         boolean isAdmin = UserConstant.ADMIN_ROLE.equals(loginUser.getUserRole());
         boolean isCreator = app.getUserId().equals(loginUser.getId());
-        ThrowUtils.throwIf(!isAdmin && !isCreator, ErrorCode.NO_AUTH_ERROR, "无权查看该应用的对话历史");
+        ThrowUtils.throwIf(!isAdmin && !isCreator, ErrorCode.DATA_NOT_FOUND, "无权查看该应用的对话历史");
         // 构建查询条件
         QueryWrapper queryWrapper = this.getQueryWrapper(appVersionQueryRequest);
         Page<AppVersion> page = this.page(Page.of(1, appVersionQueryRequest.getPageSize()), queryWrapper);
@@ -247,7 +247,7 @@ public class AppVersionServiceImpl extends ServiceImpl<AppVersionMapper, AppVers
         App app = checkAppPermission(appId, loginUser);
 
         AppVersion appVersion = this.getById(versionIdToRestore);
-        ThrowUtils.throwIf(appVersion == null, ErrorCode.NOT_FOUND_ERROR, "要恢复的版本不存在");
+        ThrowUtils.throwIf(appVersion == null, ErrorCode.DATA_NOT_FOUND, "要恢复的版本不存在");
         ThrowUtils.throwIf(Objects.equals(appVersion.getId(), app.getCurrentVersion()), ErrorCode.PARAMS_ERROR, "不能回滚到当前已发布的版本");
 
         // 步骤 2: 准备路径和暂存目录
@@ -339,10 +339,10 @@ public class AppVersionServiceImpl extends ServiceImpl<AppVersionMapper, AppVers
 
     @Override
     public AppVersionVO getAppVersionVOById(long id, User loginUser) {
-        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.DATA_NOT_FOUND);
         // 1. 获取版本数据
         AppVersion appVersion = this.getById(id);
-        ThrowUtils.throwIf(appVersion == null, ErrorCode.NOT_FOUND_ERROR, "版本不存在");
+        ThrowUtils.throwIf(appVersion == null, ErrorCode.DATA_NOT_FOUND, "版本不存在");
         // 2. 权限校验
         checkAppPermission(appVersion.getAppId(), loginUser);
         // 3. 封装并返回
@@ -367,12 +367,12 @@ public class AppVersionServiceImpl extends ServiceImpl<AppVersionMapper, AppVers
         AppVersion fromVersion = getOne(
                 QueryWrapper.create().where(APP_VERSION.APP_ID.eq(appId)).and(APP_VERSION.ID.eq(fromVersionId))
         );
-        ThrowUtils.throwIf(fromVersion == null, ErrorCode.NOT_FOUND_ERROR, "起始版本不存在");
+        ThrowUtils.throwIf(fromVersion == null, ErrorCode.DATA_NOT_FOUND, "起始版本不存在");
 
         AppVersion toVersion = getOne(
                 QueryWrapper.create().where(APP_VERSION.APP_ID.eq(appId)).and(APP_VERSION.ID.eq(toVersionId))
         );
-        ThrowUtils.throwIf(toVersion == null, ErrorCode.NOT_FOUND_ERROR, "目标版本不存在");
+        ThrowUtils.throwIf(toVersion == null, ErrorCode.DATA_NOT_FOUND, "目标版本不存在");
 
         // 4. 封装返回
         AppVersionVO fromVersionVO = AppVersion.toAppVersionVO(fromVersion);
@@ -396,10 +396,10 @@ public class AppVersionServiceImpl extends ServiceImpl<AppVersionMapper, AppVers
      */
     private App checkAppPermission(Long appId, User loginUser) {
         App app = appService.getById(appId);
-        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        ThrowUtils.throwIf(app == null, ErrorCode.DATA_NOT_FOUND, "应用不存在");
         boolean isAdmin = UserConstant.ADMIN_ROLE.equals(loginUser.getUserRole());
         boolean isCreator = app.getUserId().equals(loginUser.getId());
-        ThrowUtils.throwIf(!isAdmin && !isCreator, ErrorCode.NO_AUTH_ERROR, "无权操作该应用");
+        ThrowUtils.throwIf(!isAdmin && !isCreator, ErrorCode.DATA_NOT_FOUND, "无权操作该应用");
         return app;
     }
 

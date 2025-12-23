@@ -8,6 +8,7 @@ import com.dream.codegenerate.utils.ThrowUtils;
 import com.dream.codegenerate.model.dto.staticFile.StaticFilesListRequest;
 import com.dream.codegenerate.model.enums.CodeGenTypeEnum;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;

@@ -4,6 +4,7 @@ import com.dream.codegenerate.ai.AiCodeGenTypeRoutingService;
 import com.dream.codegenerate.langgraph4j.state.WorkflowContext;
 import com.dream.codegenerate.model.enums.CodeGenTypeEnum;
 import com.dream.codegenerate.utils.SpringContextUtil;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
 import org.bsc.langgraph4j.action.AsyncNodeAction;
 import org.bsc.langgraph4j.prebuilt.MessagesState;

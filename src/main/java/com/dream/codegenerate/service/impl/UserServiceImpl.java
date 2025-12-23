@@ -1,12 +1,12 @@
 package com.dream.codegenerate.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONArray;
-import cn.hutool.json.JSONUtil;
+import cn.hutool.v7.core.bean.BeanUtil;
+import cn.hutool.v7.core.collection.CollUtil;
+import cn.hutool.v7.core.date.DateUtil;
+import cn.hutool.v7.core.io.file.FileUtil;
+import cn.hutool.v7.core.text.StrUtil;
+import cn.hutool.v7.json.JSONArray;
+import cn.hutool.v7.json.JSONUtil;
 import com.dream.codegenerate.manager.CosManager;
 import com.dream.codegenerate.model.dto.user.VipCode;
 import com.dream.codegenerate.model.entity.AccessKey;
@@ -28,6 +28,7 @@ import com.dream.codegenerate.model.vo.UserVO;
 import com.dream.codegenerate.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +45,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
-import static cn.hutool.core.thread.ThreadUtil.sleep;
+
+import static cn.hutool.v7.core.thread.ThreadUtil.sleep;
 import static com.dream.codegenerate.constant.UserConstant.USER_LOGIN_STATE;
 
 /**
@@ -98,7 +100,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         user.setUserRole(UserRoleEnum.USER.getValue());
         boolean saveResult = this.save(user);
         if (!saveResult) {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "注册失败，数据库错误");
+            throw new BusinessException(ErrorCode.DATA_SCOPE_ERROR, "注册失败，数据库错误");
         }
         //异步调用获取key
         CompletableFuture.runAsync(() -> getNewApiKey(user.getId()));
@@ -149,13 +151,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
         User currentUser = (User) userObj;
         if (currentUser == null || currentUser.getId() == null) {
-            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+            throw new BusinessException(ErrorCode.DATA_SCOPE_ERROR);
         }
         // 从数据库查询当前用户信息
         long userId = currentUser.getId();
         currentUser = this.getById(userId);
         if (currentUser == null) {
-            throw new BusinessException(ErrorCode.NOT_LOGIN_ERROR);
+            throw new BusinessException(ErrorCode.DATA_SCOPE_ERROR);
         }
         return currentUser;
     }
@@ -185,7 +187,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 先判断用户是否登录
         Object userObj = request.getSession().getAttribute(USER_LOGIN_STATE);
         if (userObj == null) {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "用户未登录");
+            throw new BusinessException(ErrorCode.DATA_SCOPE_ERROR, "用户未登录");
         }
         // 移除登录态
         request.getSession().removeAttribute(USER_LOGIN_STATE);
@@ -394,7 +396,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         // 执行更新
         boolean updated = this.updateById(updateUser);
         if (!updated) {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "开通会员失败，操作数据库失败");
+            throw new BusinessException(ErrorCode.DATA_SCOPE_ERROR, "开通会员失败，操作数据库失败");
         }
     }
 

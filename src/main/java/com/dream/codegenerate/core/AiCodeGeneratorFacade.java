@@ -1,6 +1,6 @@
 package com.dream.codegenerate.core;
 
-import cn.hutool.json.JSONUtil;
+import cn.hutool.v7.json.JSONUtil;
 import com.dream.codegenerate.ai.AiCodeGeneratorService;
 import com.dream.codegenerate.ai.AiCodeGeneratorServiceFactory;
 import com.dream.codegenerate.ai.model.HtmlCodeResult;
@@ -20,6 +20,7 @@ import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.service.TokenStream;
 import dev.langchain4j.service.tool.ToolExecution;
 import jakarta.annotation.Resource;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.http.codec.ServerSentEvent;

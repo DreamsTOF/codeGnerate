@@ -1,6 +1,6 @@
 package com.dream.codegenerate.controller;
 
-import cn.hutool.core.bean.BeanUtil;
+import cn.hutool.v7.core.bean.BeanUtil;
 import com.mybatisflex.core.paginate.Page;
 import com.dream.codegenerate.annotation.AuthCheck;
 import com.dream.codegenerate.common.BaseResponse;
@@ -101,7 +101,7 @@ public class UserController {
         String encryptPassword = userService.getEncryptPassword(DEFAULT_PASSWORD);
         user.setUserPassword(encryptPassword);
         boolean result = userService.save(user);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        ThrowUtils.throwIf(!result, ErrorCode.DATA_NOT_FOUND);
         return ResultUtils.success(user.getId());
     }
 
@@ -113,7 +113,7 @@ public class UserController {
     public BaseResponse<User> getUserById(long id) {
         ThrowUtils.throwIf(id <= 0, ErrorCode.PARAMS_ERROR);
         User user = userService.getById(id);
-        ThrowUtils.throwIf(user == null, ErrorCode.NOT_FOUND_ERROR);
+        ThrowUtils.throwIf(user == null, ErrorCode.DATA_NOT_FOUND);
         return ResultUtils.success(user);
     }
 
@@ -152,7 +152,7 @@ public class UserController {
         User user = new User();
         BeanUtil.copyProperties(userUpdateRequest, user);
         boolean result = userService.updateById(user);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        ThrowUtils.throwIf(!result, ErrorCode.DATA_NOT_FOUND);
         return ResultUtils.success(true);
     }
 
@@ -183,18 +183,18 @@ public class UserController {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         ThrowUtils.throwIf(!Objects.equals(userService.getLoginUser(request).getId(), userUpdateRequest.getId()),
-                ErrorCode.NO_AUTH_ERROR,"修改非本人信息");
+                ErrorCode.DATA_NOT_FOUND,"修改非本人信息");
         User user = new User();
         BeanUtils.copyProperties(userUpdateRequest, user);
         boolean result = userService.updateById(user);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        ThrowUtils.throwIf(!result, ErrorCode.DATA_NOT_FOUND);
         return ResultUtils.success(true);
     }
 
     @PostMapping("/update/myavatar")
     public BaseResponse<Boolean> updateMyAvatar(HttpServletRequest request, @RequestPart("file") MultipartFile multipartFile) {
         User loginUser = userService.getLoginUser(request);
-        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR);
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.DATA_NOT_FOUND);
         return ResultUtils.success(userService.updateMyAvatar(multipartFile,loginUser));
     }
 

@@ -1,6 +1,6 @@
 package com.dream.codegenerate.model.enums;
 
-import cn.hutool.core.util.ObjUtil;
+import cn.hutool.v7.core.util.ObjUtil;
 import lombok.Getter;
 /**
  * 应用版本存储枚举类型

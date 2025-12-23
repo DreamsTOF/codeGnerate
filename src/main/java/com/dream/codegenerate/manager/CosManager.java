@@ -1,6 +1,7 @@
 package com.dream.codegenerate.manager;
 
 
+import cn.hutool.v7.core.io.file.FileUtil;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.model.PutObjectRequest;
 import com.qcloud.cos.model.PutObjectResult;
@@ -8,12 +9,12 @@ import com.dream.codegenerate.config.CosClientConfig;
 import com.qcloud.cos.model.ciModel.persistence.PicOperations;
 import jakarta.annotation.Resource;
 import lombok.CustomLog;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
 
 /**
  * COS 对象存储管理器
@@ -75,7 +76,7 @@ public class CosManager {
         // 图片处理规则列表
         List<PicOperations.Rule> rules = new ArrayList<>();
         // 1. 图片压缩（转成 webp 格式）
-        String webpKey = FileUtil.mainName(key) + ".webp";
+        String webpKey = FileUtil.normalize(key) + ".webp";
         PicOperations.Rule compressRule = new PicOperations.Rule();
         compressRule.setFileId(webpKey);
         compressRule.setBucket(cosClientConfig.getBucket());
@@ -85,7 +86,7 @@ public class CosManager {
         if (file.length() > 20 * 1024) {
             PicOperations.Rule thumbnailRule = new PicOperations.Rule();
             // 拼接缩略图的路径
-            String thumbnailKey = FileUtil.mainName(key) + "_thumbnail." + FileUtil.getSuffix(key);
+            String thumbnailKey = FileUtil.normalize(key) + "_thumbnail." + FileUtil.readUtf8String(key);
             thumbnailRule.setFileId(thumbnailKey);
             thumbnailRule.setBucket(cosClientConfig.getBucket());
             // 缩放规则 /thumbnail/<Width>x<Height>>（如果大于原图宽高，则不处理）

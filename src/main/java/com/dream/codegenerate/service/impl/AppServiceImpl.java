@@ -1,10 +1,11 @@
 package com.dream.codegenerate.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
-import cn.hutool.core.collection.CollUtil;
-import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.util.RandomUtil;
-import cn.hutool.core.util.StrUtil;
+
+import cn.hutool.v7.core.bean.BeanUtil;
+import cn.hutool.v7.core.collection.CollUtil;
+import cn.hutool.v7.core.io.file.FileUtil;
+import cn.hutool.v7.core.text.StrUtil;
+import cn.hutool.v7.core.util.RandomUtil;
 import com.dream.codegenerate.core.builder.BuildResult;
 import com.dream.codegenerate.service.*;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -88,10 +89,10 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         ThrowUtils.throwIf(StrUtil.isBlank(message), ErrorCode.PARAMS_ERROR, "提示词不能为空");
         // 2. 查询应用信息
         App app = this.getById(appId);
-        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        ThrowUtils.throwIf(app == null, ErrorCode.DATA_NOT_FOUND, "应用不存在");
         // 3. 权限校验，仅本人可以和自己的应用对话
         if (!app.getUserId().equals(loginUser.getId())) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限访问该应用");
+            throw new BusinessException(ErrorCode.DATA_NOT_FOUND, "无权限访问该应用");
         }
         // 4. 获取应用的代码生成类型
         String codeGenType = app.getCodeGenType();
@@ -134,7 +135,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         app.setCodeGenType(selectedCodeGenType.getValue());
         // 插入数据库
         boolean result = this.save(app);
-        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        ThrowUtils.throwIf(!result, ErrorCode.DATA_NOT_FOUND);
         log.info("应用创建成功，ID: {}, 类型: {}", app.getId(), selectedCodeGenType.getValue());
         return app.getId();
     }
@@ -143,13 +144,13 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     public String deployApp(Long appId, User loginUser) {
         // 1. 参数校验
         ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用 ID 错误");
-        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.DATA_NOT_FOUND, "用户未登录");
         // 2. 查询应用信息
         App app = this.getById(appId);
-        ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR, "应用不存在");
+        ThrowUtils.throwIf(app == null, ErrorCode.DATA_NOT_FOUND, "应用不存在");
         // 3. 权限校验，仅本人可以部署自己的应用
         if (!app.getUserId().equals(loginUser.getId())) {
-            throw new BusinessException(ErrorCode.NO_AUTH_ERROR, "无权限部署该应用");
+            throw new BusinessException(ErrorCode.DATA_NOT_FOUND, "无权限部署该应用");
         }
         // 4. 检查是否已有 deployKey
         String deployKey = app.getDeployKey();
@@ -191,7 +192,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         updateApp.setDeployKey(deployKey);
         updateApp.setDeployedTime(LocalDateTime.now());
         boolean updateResult = this.updateById(updateApp);
-        ThrowUtils.throwIf(!updateResult, ErrorCode.OPERATION_ERROR, "更新应用部署信息失败");
+        ThrowUtils.throwIf(!updateResult, ErrorCode.DATA_NOT_FOUND, "更新应用部署信息失败");
         // 10. 构建应用访问 URL
         String appDeployUrl = String.format("%s/%s/", deployHost, deployKey);        // 11. 异步生成截图并且更新应用封面
         generateAppScreenshotAsync(appId, appDeployUrl);
@@ -215,7 +216,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
             updateApp.setId(appId);
             updateApp.setCover(screenshotUrl);
             boolean updated = this.updateById(updateApp);
-            ThrowUtils.throwIf(!updated, ErrorCode.OPERATION_ERROR, "更新应用封面字段失败");
+            ThrowUtils.throwIf(!updated, ErrorCode.DATA_NOT_FOUND, "更新应用封面字段失败");
         });
     }
 

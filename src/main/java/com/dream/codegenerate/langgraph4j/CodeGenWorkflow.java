@@ -1,12 +1,13 @@
 package com.dream.codegenerate.langgraph4j;
 
-import cn.hutool.json.JSONUtil;
+import cn.hutool.v7.json.JSONUtil;
 import com.dream.codegenerate.exception.BusinessException;
 import com.dream.codegenerate.exception.ErrorCode;
 import com.dream.codegenerate.langgraph4j.model.QualityResult;
 import com.dream.codegenerate.langgraph4j.node.*;
 import com.dream.codegenerate.langgraph4j.state.WorkflowContext;
 import com.dream.codegenerate.model.enums.CodeGenTypeEnum;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
 import org.bsc.langgraph4j.CompiledGraph;
 import org.bsc.langgraph4j.GraphRepresentation;
@@ -62,7 +63,7 @@ public class CodeGenWorkflow {
                     // 编译工作流
                     .compile();
         } catch (GraphStateException e) {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "工作流创建失败");
+            throw new BusinessException(ErrorCode.DATA_SCOPE_ERROR, "工作流创建失败");
         }
     }
 

@@ -1,7 +1,6 @@
 package com.dream.codegenerate.model.entity;
 
 import com.dream.codegenerate.manager.VectorTypeHandler;
-import com.dream.codegenerate.model.enums.MessageTypeEnum;
 import com.dream.codegenerate.manager.JsonbStringTypeHandler;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -47,7 +46,7 @@ public class ChatMessagesEntity implements Serializable {
     private String memoryId;
 
 
-    private MessageTypeEnum messageType;
+    private ChatMessageType messageType;
 
     @Column(typeHandler = JsonbStringTypeHandler.class)
     private String contents;
@@ -77,24 +76,24 @@ public class ChatMessagesEntity implements Serializable {
         try {
             switch (message) {
                 case UserMessage userMessage -> {
-                    builder.messageType(MessageTypeEnum.USER);
+                    builder.messageType(ChatMessageType.USER);
                     builder.contents(objectMapper.writeValueAsString(userMessage.contents()));
                 }
                 case AiMessage aiMessage -> {
-                    builder.messageType(MessageTypeEnum.AI);
+                    builder.messageType(ChatMessageType.AI);
                     builder.text(aiMessage.text());
                     if (aiMessage.hasToolExecutionRequests()) {
                         builder.toolExecutionRequests(objectMapper.writeValueAsString(aiMessage.toolExecutionRequests()));
                     }
                 }
                 case ToolExecutionResultMessage toolMessage -> {
-                    builder.messageType(MessageTypeEnum.TOOL_EXECUTION_RESULT);
+                    builder.messageType(ChatMessageType.TOOL_EXECUTION_RESULT);
                     builder.toolCallId(toolMessage.id());
                     builder.toolName(toolMessage.toolName());
                     builder.text(toolMessage.text());
                 }
                 case SystemMessage systemMessage -> {
-                    builder.messageType(MessageTypeEnum.SYSTEM);
+                    builder.messageType(ChatMessageType.SYSTEM);
                     builder.text(systemMessage.text());
                 }
                 case null, default ->

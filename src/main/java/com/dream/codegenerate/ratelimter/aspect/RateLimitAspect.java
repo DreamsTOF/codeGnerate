@@ -7,6 +7,7 @@ import com.dream.codegenerate.ratelimter.annotation.RateLimit;
 import com.dream.codegenerate.service.UserService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.Aspect;
@@ -47,7 +48,7 @@ public class RateLimitAspect {
         rateLimiter.trySetRate(RateType.OVERALL, rateLimit.rate(), rateLimit.rateInterval(), RateIntervalUnit.SECONDS);
         // 尝试获取一个令牌，如果获取失败则限流
         if (!rateLimiter.tryAcquire(1)) {
-            throw new BusinessException(ErrorCode.TOO_MANY_REQUEST, rateLimit.message());
+            throw new BusinessException(ErrorCode.DATA_SCOPE_ERROR, rateLimit.message());
         }
     }
 

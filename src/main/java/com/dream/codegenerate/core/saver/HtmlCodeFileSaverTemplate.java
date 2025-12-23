@@ -1,6 +1,6 @@
 package com.dream.codegenerate.core.saver;
 
-import cn.hutool.core.util.StrUtil;
+import cn.hutool.v7.core.text.StrUtil;
 import com.dream.codegenerate.ai.model.HtmlCodeResult;
 import com.dream.codegenerate.exception.BusinessException;
 import com.dream.codegenerate.exception.ErrorCode;

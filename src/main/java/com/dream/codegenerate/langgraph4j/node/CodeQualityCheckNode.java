@@ -1,11 +1,13 @@
 package com.dream.codegenerate.langgraph4j.node;
 
-import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.util.StrUtil;
+
+import cn.hutool.v7.core.io.file.FileUtil;
+import cn.hutool.v7.core.text.StrUtil;
 import com.dream.codegenerate.langgraph4j.ai.CodeQualityCheckService;
 import com.dream.codegenerate.langgraph4j.model.QualityResult;
 import com.dream.codegenerate.langgraph4j.state.WorkflowContext;
 import com.dream.codegenerate.utils.SpringContextUtil;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
 import org.bsc.langgraph4j.action.AsyncNodeAction;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
@@ -82,7 +84,7 @@ public class CodeQualityCheckNode {
         FileUtil.walkFiles(directory, file -> {
             // 过滤条件：跳过隐藏文件、特定目录下的文件、非代码文件
             if (shouldSkipFile(file, directory)) {
-                return;
+                return  false;
             }
             if (isCodeFile(file)) {
                 String relativePath = FileUtil.subPath(directory.getAbsolutePath(), file.getAbsolutePath());
@@ -90,6 +92,7 @@ public class CodeQualityCheckNode {
                 String fileContent = FileUtil.readUtf8String(file);
                 codeContent.append(fileContent).append("\n\n");
             }
+            return false;
         });
         return codeContent.toString();
     }

@@ -1,7 +1,7 @@
 package com.dream.codegenerate.utils;
 
-import cn.hutool.crypto.digest.DigestUtil;
-import cn.hutool.json.JSONUtil;
+import cn.hutool.v7.crypto.digest.DigestUtil;
+import cn.hutool.v7.json.JSONUtil;
 
 /**
  * 缓存 key 生成工具类

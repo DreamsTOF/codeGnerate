@@ -1,7 +1,5 @@
 package com.dream.codegenerate.langgraph4j;
 
-import cn.hutool.core.thread.ExecutorBuilder;
-import cn.hutool.core.thread.ThreadFactoryBuilder;
 import com.dream.codegenerate.exception.BusinessException;
 import com.dream.codegenerate.exception.ErrorCode;
 import com.dream.codegenerate.langgraph4j.model.QualityResult;
@@ -9,6 +7,8 @@ import com.dream.codegenerate.langgraph4j.node.*;
 import com.dream.codegenerate.langgraph4j.node.concurrent.*;
 import com.dream.codegenerate.langgraph4j.state.WorkflowContext;
 import com.dream.codegenerate.model.enums.CodeGenTypeEnum;
+import jodd.util.ThreadFactoryBuilder;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
 import org.bsc.langgraph4j.*;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
@@ -81,7 +81,7 @@ public class CodeGenConcurrentWorkflow {
                     .addEdge("project_builder", END)
                     .compile();
         } catch (GraphStateException e) {
-            throw new BusinessException(ErrorCode.OPERATION_ERROR, "并发工作流创建失败");
+            throw new BusinessException(ErrorCode.DATA_SCOPE_ERROR, "并发工作流创建失败");
         }
     }
 
@@ -90,39 +90,41 @@ public class CodeGenConcurrentWorkflow {
      */
     public WorkflowContext executeWorkflow(String originalPrompt) {
         CompiledGraph<MessagesState<String>> workflow = createWorkflow();
-        WorkflowContext initialContext = WorkflowContext.builder()
-                .originalPrompt(originalPrompt)
-                .currentStep("初始化")
-                .build();
-        GraphRepresentation graph = workflow.getGraph(GraphRepresentation.Type.MERMAID);
-        log.info("并发工作流图:\n{}", graph.content());
-        log.info("开始执行并发代码生成工作流");
-        WorkflowContext finalContext = null;
-        int stepCounter = 1;
-        // 配置并发执行
-        ExecutorService pool = ExecutorBuilder.create()
-                .setCorePoolSize(10)
-                .setMaxPoolSize(20)
-                .setWorkQueue(new LinkedBlockingQueue<>(100))
-                .setThreadFactory(ThreadFactoryBuilder.create().setNamePrefix("Parallel-Image-Collect").build())
-                .build();
-        RunnableConfig runnableConfig = RunnableConfig.builder()
-                .addParallelNodeExecutor("image_plan", pool)
-                .build();
-        for (NodeOutput<MessagesState<String>> step : workflow.stream(
-                Map.of(WorkflowContext.WORKFLOW_CONTEXT_KEY, initialContext),
-                runnableConfig)) {
-            log.info("--- 第 {} 步完成 ---", stepCounter);
-            WorkflowContext currentContext = WorkflowContext.getContext(step.state());
-            if (currentContext != null) {
-                finalContext = currentContext;
-                log.info("当前步骤上下文: {}", currentContext);
-            }
-            stepCounter++;
-        }
-        log.info("并发代码生成工作流执行完成！");
-        return finalContext;
+//        WorkflowContext initialContext = WorkflowContext.builder()
+//                .originalPrompt(originalPrompt)
+//                .currentStep("初始化")
+//                .build();
+//        GraphRepresentation graph = workflow.getGraph(GraphRepresentation.Type.MERMAID);
+//        log.info("并发工作流图:\n{}", graph.content());
+//        log.info("开始执行并发代码生成工作流");
+//        WorkflowContext finalContext = null;
+//        int stepCounter = 1;
+//        // 配置并发执行
+//        ExecutorService pool = ExecutorBuilder.create()
+//                .setCorePoolSize(10)
+//                .setMaxPoolSize(20)
+//                .setWorkQueue(new LinkedBlockingQueue<>(100))
+//                .setThreadFactory(ThreadFactoryBuilder.create().setNamePrefix("Parallel-Image-Collect").build())
+//                .build();
+//        RunnableConfig runnableConfig = RunnableConfig.builder()
+//                .addParallelNodeExecutor("image_plan", pool)
+//                .build();
+//        for (NodeOutput<MessagesState<String>> step : workflow.stream(
+//                Map.of(WorkflowContext.WORKFLOW_CONTEXT_KEY, initialContext),
+//                runnableConfig)) {
+//            log.info("--- 第 {} 步完成 ---", stepCounter);
+//            WorkflowContext currentContext = WorkflowContext.getContext(step.state());
+//            if (currentContext != null) {
+//                finalContext = currentContext;
+//                log.info("当前步骤上下文: {}", currentContext);
+//            }
+//            stepCounter++;
+//        }
+//        log.info("并发代码生成工作流执行完成！");
+//        return finalContext;
+        return null;
     }
+
 
     /**
      * 路由函数：根据质检结果决定下一步

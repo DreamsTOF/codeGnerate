@@ -162,7 +162,7 @@ public class ProjectPackagerUtil {
      * 将包含文件内容的JSON字符串解析并写入到项目目录中。
      */
     public void writeJsonToProject(String jsonContent, String projectRootPath) throws IOException {
-        Map<String, String> fileContents = JSONUtil.toBean(jsonContent, new TypeReference<Map<String, String>>() {}, false);
+        Map<String, String> fileContents = JSONUtil.toBean(jsonContent, Map.class);
 
         if (fileContents == null || fileContents.isEmpty()) {
             log.warn("版本内容数据为空，没有文件需要写入。");

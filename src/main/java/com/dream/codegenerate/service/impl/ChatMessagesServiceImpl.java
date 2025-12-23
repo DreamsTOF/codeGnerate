@@ -1,7 +1,6 @@
 package com.dream.codegenerate.service.impl;
 
 import com.dream.codegenerate.model.entity.table.ChatMessagesTableDef;
-import com.dream.codegenerate.model.enums.MessageTypeEnum;
 import com.dream.codegenerate.utils.EmbeddingUtils;
 import com.dream.codegenerate.utils.JsonProcessorUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -15,9 +14,11 @@ import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.ChatMessageType;
 import dev.langchain4j.data.message.UserMessage;
 import io.micrometer.common.util.StringUtils;
 import jakarta.annotation.Resource;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -57,7 +58,7 @@ public class ChatMessagesServiceImpl extends ServiceImpl<ChatMessagesMapper, Cha
         // 1. 先获取最后一条用户消息，作为检索的依据
         QueryWrapper lastUserMessageQuery = QueryWrapper.create()
                 .where(ChatMessagesTableDef.CHAT_MESSAGES.MEMORY_ID.eq(memoryId))
-                .and(ChatMessagesTableDef.CHAT_MESSAGES.MESSAGE_TYPE.eq(MessageTypeEnum.USER))
+                .and(ChatMessagesTableDef.CHAT_MESSAGES.MESSAGE_TYPE.eq(ChatMessageType.USER))
                 .orderBy(ChatMessagesTableDef.CHAT_MESSAGES.CREATED_AT.desc())
                 .limit(1);
 
@@ -109,7 +110,7 @@ public class ChatMessagesServiceImpl extends ServiceImpl<ChatMessagesMapper, Cha
             // 创建一个副本进行遍历，避免在遍历时修改Map
             for (ChatMessagesEntity entity : new ArrayList<>(messagesToLoadMap.values())) {
                 // 只关心AI消息
-                if (entity.getMessageType() == MessageTypeEnum.AI) {
+                if (Objects.equals(entity.getMessageType(), ChatMessageType.AI)) {
                     ChatMessage chatMessage = entity.toChatMessage(langchain4jObjectMapper);
                     if (chatMessage instanceof AiMessage aiMessage && aiMessage.hasToolExecutionRequests()) {
                         for (ToolExecutionRequest request : aiMessage.toolExecutionRequests()) {

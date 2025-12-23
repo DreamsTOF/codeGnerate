@@ -1,13 +1,15 @@
 package com.dream.codegenerate.service.impl;
 
-import cn.hutool.core.io.FileUtil;
-import cn.hutool.core.util.StrUtil;
+
+import cn.hutool.v7.core.io.file.FileUtil;
+import cn.hutool.v7.core.text.StrUtil;
 import com.dream.codegenerate.exception.ErrorCode;
 import com.dream.codegenerate.utils.ThrowUtils;
 import com.dream.codegenerate.manager.CosManager;
 import com.dream.codegenerate.service.ScreenshotService;
 import com.dream.codegenerate.utils.WebScreenshotUtils;
 import jakarta.annotation.Resource;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -33,11 +35,11 @@ public class ScreenshotServiceImpl implements ScreenshotService {
         log.info("开始生成网页截图，URL：{}", webUrl);
         // 本地截图
         String localScreenshotPath = webScreenshotUtils.saveWebPageScreenshot(webUrl);
-        ThrowUtils.throwIf(StrUtil.isBlank(localScreenshotPath), ErrorCode.OPERATION_ERROR, "生成网页截图失败");
+        ThrowUtils.throwIf(StrUtil.isBlank(localScreenshotPath), ErrorCode.OPERATION_FAILED, "生成网页截图失败");
         // 上传图片到 COS
         try {
             String cosUrl = uploadScreenshotToCos(localScreenshotPath);
-            ThrowUtils.throwIf(StrUtil.isBlank(cosUrl), ErrorCode.OPERATION_ERROR, "上传截图到对象存储失败");
+            ThrowUtils.throwIf(StrUtil.isBlank(cosUrl), ErrorCode.OPERATION_FAILED, "上传截图到对象存储失败");
             log.info("截图上传成功，URL：{}", cosUrl);
             return cosUrl;
         } finally {

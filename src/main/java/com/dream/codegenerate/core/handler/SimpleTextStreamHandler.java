@@ -3,6 +3,7 @@ package com.dream.codegenerate.core.handler;
 import com.dream.codegenerate.model.entity.User;
 import com.dream.codegenerate.model.enums.ChatHistoryMessageTypeEnum;
 import com.dream.codegenerate.service.ChatHistoryService;
+import lombok.CustomLog;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.codec.ServerSentEvent;
 import reactor.core.publisher.Flux;
