@@ -7,6 +7,7 @@ package com.dream.codegenerate.model.vo.appVersion;
  * Created by womon
  */
 
+import com.dream.codegenerate.model.entity.AppVersion;
 import com.dream.codegenerate.model.enums.AppVersionStoreTypeEnum;
 import lombok.Builder;
 import lombok.Data;
@@ -48,5 +49,17 @@ public class AppVersionQueryVO  implements Serializable {
      * 版本说明，类似于 git commit message
      */
     private String message;
+
+
+    public static AppVersionQueryVO toAppVersionQueryVO(AppVersion appVersion) {
+        return AppVersionQueryVO.builder()
+                .id(appVersion.getId())
+                .appId(appVersion.getAppId())
+                .cover(appVersion.getCover())
+                .version(appVersion.getVersion())
+                .storageType(appVersion.getStorageType())
+                .message(appVersion.getMessage())
+                .build();
+    }
 
 }

@@ -9,7 +9,7 @@ import com.mybatisflex.core.BaseMapper;
  *
  * @author dream
  */
-@UseDataSource("mysql")
+@UseDataSource("master")
 public interface AccessKeyMapper extends BaseMapper<AccessKey> {
 
 }

@@ -1,0 +1,61 @@
+package #(packageConfig.entityPackage);
+
+import com.mybatisflex.annotation.Id;
+import com.mybatisflex.annotation.KeyType;
+import com.mybatisflex.annotation.Table;
+import com.mybatisflex.annotation.Column;
+import java.io.Serializable;
+import java.time.LocalDateTime;
+import java.util.Date;
+import java.math.BigDecimal;
+
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.Data;
+import lombok.*;
+import lombok.EqualsAndHashCode;
+import lombok.experimental.Accessors;
+
+/**
+ * #(table.comment) 实体类
+ *
+ * @author #(javadocConfig.author)
+ * @since #(javadocConfig.since)
+ */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Accessors(chain = true)
+@EqualsAndHashCode(callSuper = false)
+@Table(value = "#(table.name)")
+@Schema(description = "#(table.comment)")
+public class #(table.buildEntityClassName()) implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+#for(column : table.columns)
+    /**
+     * #(column.comment)
+     */
+    #if(column.primaryKey)
+    @Id(keyType = KeyType.Auto)
+    #else
+        #if(column.name == "isDelete" || column.name == "is_delete")
+    @Column(value = "#(column.name)", isLogicDelete = true)
+        #else
+    @Column(value = "#(column.name)")
+        #end
+    #end
+    @Schema(description = "#(column.comment ?? column.property)")
+    private #(column.propertySimpleType) #(column.property);
+
+#end
+
+
+#for(column : table.columns)
+    /** 审计显示: #(column.comment ?? column.property) */
+    @Schema(description = "审计显示: #(column.comment ?? column.property)")
+    public static final String SHOW_#(column.property.toUpperCase()) = "#(column.property)";
+
+#end
+}

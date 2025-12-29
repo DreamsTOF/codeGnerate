@@ -1,4 +1,4 @@
-package com.dream.codegenerate.utils.autoAudit;
+package com.dream.codegenerate.log.autoAudit;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
@@ -7,11 +7,16 @@ import java.lang.reflect.Field;
 import java.util.concurrent.TimeUnit;
 
 /**
- * AuditMetaCache - 审计元数据缓存中心
- * 职责：缓存 Java 类和字段与业务显示名 (@Schema/@ApiModelProperty) 的映射关系。
+ * 审计元数据缓存 (AuditMetaCache)
+ * <p>
+ * <b>职责：</b>
+ * 高性能缓存 Java 字段与业务名称 (@Schema / @ApiModelProperty) 的映射关系。
+ * 避免频繁反射读取注解导致的性能损耗。
+ * </p>
  */
 public class AuditMetaCache {
 
+    // 使用 Caffeine 本地缓存，最大容量 5000，24小时过期
     private static final Cache<AnnotatedElement, String> DISPLAY_NAME_CACHE = Caffeine.newBuilder()
             .maximumSize(5000)
             .expireAfterAccess(24, TimeUnit.HOURS)
@@ -44,7 +49,6 @@ public class AuditMetaCache {
 
         // 2. 尝试 Swagger 2 (@ApiModel 或 @ApiModelProperty)
         try {
-            // 针对类
             if (element instanceof Class) {
                 Class<?> apiModelClass = Class.forName("io.swagger.annotations.ApiModel");
                 Object apiModel = element.getAnnotation((Class) apiModelClass);
@@ -53,7 +57,6 @@ public class AuditMetaCache {
                     if (!value.isEmpty()) return value;
                 }
             }
-            // 针对字段
             Class<?> apiPropClass = Class.forName("io.swagger.annotations.ApiModelProperty");
             Object apiProp = element.getAnnotation((Class) apiPropClass);
             if (apiProp != null) {
@@ -62,7 +65,7 @@ public class AuditMetaCache {
             }
         } catch (Exception ignored) {}
 
-        // 兜底策略
+        // 3. 兜底策略：使用类名或字段名
         if (element instanceof Class<?> clazz) return clazz.getSimpleName();
         if (element instanceof Field field) return field.getName();
         return "Unknown";

@@ -231,7 +231,7 @@ public class AppVersionServiceImpl extends ServiceImpl<AppVersionMapper, AppVers
             return new ArrayList<>();
         }
         return appVersionList.stream()
-                .map(AppVersion::toAppVersionQueryVO)
+                .map(AppVersionQueryVO::toAppVersionQueryVO)
                 .collect(Collectors.toList());
     }
 
@@ -346,7 +346,7 @@ public class AppVersionServiceImpl extends ServiceImpl<AppVersionMapper, AppVers
         // 2. 权限校验
         checkAppPermission(appVersion.getAppId(), loginUser);
         // 3. 封装并返回
-        return AppVersion.toAppVersionVO(appVersion);
+        return AppVersionVO.toAppVersionVO(appVersion);
     }
     @Override
     public AppVersionCompareVO compare(AppVersionCompareRequest appVersionCompareRequest, User loginUser) {
@@ -375,8 +375,8 @@ public class AppVersionServiceImpl extends ServiceImpl<AppVersionMapper, AppVers
         ThrowUtils.throwIf(toVersion == null, ErrorCode.DATA_NOT_FOUND, "目标版本不存在");
 
         // 4. 封装返回
-        AppVersionVO fromVersionVO = AppVersion.toAppVersionVO(fromVersion);
-        AppVersionVO toVersionVO = AppVersion.toAppVersionVO(toVersion);
+        AppVersionVO fromVersionVO = AppVersionVO.toAppVersionVO(fromVersion);
+        AppVersionVO toVersionVO = AppVersionVO.toAppVersionVO(toVersion);
 
         return AppVersionCompareVO.builder()
                 .fromVersionData(fromVersionVO)

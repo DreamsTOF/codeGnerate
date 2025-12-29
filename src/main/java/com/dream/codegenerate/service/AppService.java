@@ -79,4 +79,5 @@ public interface AppService extends IService<App> {
      */
     QueryWrapper getQueryWrapper(AppQueryRequest appQueryRequest);
 
+    boolean updateApp(App app);
 }

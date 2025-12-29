@@ -7,6 +7,7 @@ import cn.hutool.v7.core.io.file.FileUtil;
 import cn.hutool.v7.core.text.StrUtil;
 import cn.hutool.v7.json.JSONArray;
 import cn.hutool.v7.json.JSONUtil;
+import com.dream.codegenerate.log.autoAudit.AuditLog;
 import com.dream.codegenerate.manager.CosManager;
 import com.dream.codegenerate.model.dto.user.VipCode;
 import com.dream.codegenerate.model.entity.AccessKey;
@@ -15,6 +16,7 @@ import com.dream.codegenerate.newapi.common.ApiResponse;
 import com.dream.codegenerate.newapi.model.tokrn.request.CreateTokenRequest;
 import com.dream.codegenerate.newapi.model.tokrn.response.TokenInfo;
 import com.dream.codegenerate.service.AccessKeyService;
+import com.dream.codegenerate.utils.smartQuery.FlexSmartQuery;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import com.dream.codegenerate.exception.BusinessException;
@@ -40,6 +42,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.locks.ReentrantLock;
@@ -82,6 +85,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (!userPassword.equals(checkPassword)) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR, "两次输入的密码不一致");
         }
+
         // 2. 查询用户是否已存在
         QueryWrapper queryWrapper = new QueryWrapper();
         queryWrapper.eq("userAccount", userAccount);
@@ -325,6 +329,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         return true;
     }
 
+    @Override
+    @AuditLog(entity = User.class, action = "更新用户")
+    public boolean updateUser(User user) {
+        return this.updateById(user);
+    }
+
     /**
      * 校验兑换码并标记为已使用
      */
@@ -384,7 +394,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
      */
     private void updateUserVipInfo(User user, String usedVipCode) {
         // 计算过期时间（当前时间 + 1 年）
-        Date expireTime = DateUtil.offsetMonth(new Date(), 12); // 计算当前时间加 1 年后的时间
+        LocalDateTime expireTime = DateUtil.offsetMonth(new Date(), 12).toLocalDateTime(); // 计算当前时间加 1 年后的时间
 
         // 构建更新对象
         User updateUser = new User();

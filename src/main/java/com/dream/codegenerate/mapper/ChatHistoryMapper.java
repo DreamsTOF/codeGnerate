@@ -9,7 +9,7 @@ import com.dream.codegenerate.model.entity.ChatHistory;
  *
  *
  */
-@UseDataSource("mysql")
+@UseDataSource("master")
 public interface ChatHistoryMapper extends BaseMapper<ChatHistory> {
 
 }

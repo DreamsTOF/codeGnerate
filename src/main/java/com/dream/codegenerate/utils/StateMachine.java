@@ -1,9 +1,7 @@
 package com.dream.codegenerate.utils;
 
-
 import com.dream.codegenerate.exception.BusinessException;
 import com.dream.codegenerate.exception.ErrorCode;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
@@ -52,18 +50,27 @@ public class StateMachine<S, E, C> {
         Map<E, List<Transition<S, E, C>>> eventMap = transitionMap.get(currentState);
 
         // 1. 校验当前状态是否支持该事件
-        ThrowUtils.throwIf(eventMap == null || !eventMap.containsKey(event),
-                ErrorCode.STATUS_ERROR,
-                String.format("当前状态 [%s] 无法处理事件 [%s]", currentState, event));
+        // [修改点] 移除 ThrowUtils 依赖，使用 Asserts.isTrue 或直接判断
+        if (eventMap == null || !eventMap.containsKey(event)) {
+            throw new BusinessException(ErrorCode.STATUS_ERROR,
+                    String.format("当前状态 [%s] 无法处理事件 [%s]", currentState, event));
+        }
 
         List<Transition<S, E, C>> transitions = eventMap.get(event);
 
         // 2. 查找匹配前置条件的转换规则
-        Transition<S, E, C> matchTransition = transitions.stream()
-                .filter(t -> t.condition == null || t.condition.test(context))
-                .findFirst()
-                .orElseThrow(() -> new BusinessException(
-                        ErrorCode.STATUS_ERROR, "业务前置条件校验未通过，无法执行转换"));
+        // [优化] 如果没有 condition 的规则，直接匹配，避免 stream 开销 (虽然 stream 很干净，但此处逻辑简单)
+        Transition<S, E, C> matchTransition = null;
+        for (Transition<S, E, C> t : transitions) {
+            if (t.condition == null || t.condition.test(context)) {
+                matchTransition = t;
+                break;
+            }
+        }
+
+        if (matchTransition == null) {
+            throw new BusinessException(ErrorCode.STATUS_ERROR, "业务前置条件校验未通过，无法执行转换");
+        }
 
         // 3. 执行后置动作
         if (matchTransition.action != null) {
@@ -90,14 +97,13 @@ public class StateMachine<S, E, C> {
     @NoArgsConstructor
     public static class Builder<S, E, C> {
         private final StateMachine<S, E, C> machine = new StateMachine<>();
-        private TransitionBuilder currentTransition;
+        // [优化] 移除 unused field 'currentTransition'
 
         /**
          * 定义一个新的转换路径
          */
         public TransitionBuilder transition() {
-            this.currentTransition = new TransitionBuilder(this);
-            return currentTransition;
+            return new TransitionBuilder(this);
         }
 
         public StateMachine<S, E, C> build() {

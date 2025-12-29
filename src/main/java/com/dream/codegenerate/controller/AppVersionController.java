@@ -13,7 +13,6 @@ import com.dream.codegenerate.model.dto.appVersion.AppVersionQueryRequest;
 import com.dream.codegenerate.model.entity.User;
 import com.dream.codegenerate.model.vo.appVersion.AppVersionQueryVO;
 import com.dream.codegenerate.service.UserService;
-import io.swagger.annotations.ApiOperation;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,7 +45,7 @@ public class AppVersionController {
      * @return
      */
     @PostMapping("save")
-    @ApiOperation("保存应用版本")
+
     public BaseResponse<Long> save(@RequestBody AppVersionSaveRequest AppVersionSaveRequest,HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
         return ResultUtils.success(appVersionService.createNewVersion(AppVersionSaveRequest, loginUser));
@@ -57,7 +56,7 @@ public class AppVersionController {
      * @return 所有数据
      */
     @PostMapping("list")
-    @ApiOperation("查询应用的所有版本")
+
     public BaseResponse<Page<AppVersionQueryVO>> list(@RequestBody AppVersionQueryRequest appVersionQueryRequest,
                                                 HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
@@ -71,7 +70,7 @@ public class AppVersionController {
      * @return 应用版本详情
      */
     @GetMapping("getInfo/{id}")
-    @ApiOperation("获取应用版本详情")
+
     public BaseResponse<AppVersionVO> getInfo(@PathVariable Long id,  HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
         return ResultUtils.success(appVersionService.getAppVersionVOById(id, loginUser));
@@ -85,7 +84,7 @@ public class AppVersionController {
      * @return 恢复的版本内容
      */
     @PostMapping("/restore")
-    @ApiOperation("恢复应用版本")
+
     public BaseResponse<Boolean> restore(@RequestBody AppVersionRestoreRequest appVersionRestoreRequest,
                                                      HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
@@ -100,7 +99,7 @@ public class AppVersionController {
      */
 
     @PostMapping("/compare")
-    @ApiOperation("对比两个版本的差异")
+
     public BaseResponse<AppVersionCompareVO> compare(@RequestBody AppVersionCompareRequest appVersionCompareRequest,
                                                      HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
@@ -109,7 +108,7 @@ public class AppVersionController {
 
 
     @PostMapping("/delete")
-    @ApiOperation("删除应用版本")
+
     public BaseResponse<Boolean> deleteById(@RequestBody DeleteRequest deleteRequest, HttpServletRequest request) {
         User loginUser = userService.getLoginUser(request);
         return ResultUtils.success(appVersionService.deleteByAppId(deleteRequest.getId(), loginUser));

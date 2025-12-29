@@ -6,14 +6,14 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import dev.langchain4j.agent.tool.ToolExecutionRequest;
 import dev.langchain4j.data.message.*;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.jackson.JsonComponent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+
 
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility.ANY;
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
@@ -32,11 +32,15 @@ public class JsonConfig {
      */
     @Bean
     @Primary
-    public ObjectMapper jacksonObjectMapper(Jackson2ObjectMapperBuilder builder) {
-        ObjectMapper objectMapper = builder
-                .createXmlMapper(false)
+    public ObjectMapper jacksonObjectMapper() {
+        // 创建 ObjectMapper 实例
+        ObjectMapper objectMapper = JsonMapper.builder()
+                .addModule(new JavaTimeModule())
                 .build();
+
+        // 创建一个 SimpleModule 并添加自定义序列化器
         SimpleModule module = new SimpleModule();
+
         module.addSerializer(Long.class, ToStringSerializer.instance);
         module.addSerializer(Long.TYPE, ToStringSerializer.instance);
         objectMapper.registerModule(module);

@@ -7,6 +7,8 @@ import cn.hutool.v7.core.io.file.FileUtil;
 import cn.hutool.v7.core.text.StrUtil;
 import cn.hutool.v7.core.util.RandomUtil;
 import com.dream.codegenerate.core.builder.BuildResult;
+import com.dream.codegenerate.log.autoAudit.AuditLog;
+import com.dream.codegenerate.model.entity.table.AppTableDef;
 import com.dream.codegenerate.service.*;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
@@ -271,6 +273,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         Long userId = appQueryRequest.getUserId();
         String sortField = appQueryRequest.getSortField();
         String sortOrder = appQueryRequest.getSortOrder();
+
         return QueryWrapper.create()
                 .eq("id", id)
                 .like("appName", appName)
@@ -281,6 +284,12 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
                 .eq("priority", priority)
                 .eq("userId", userId)
                 .orderBy(sortField, "ascend".equals(sortOrder));
+    }
+
+    @Override
+    @AuditLog(entity = App.class, action = "更新应用")
+    public boolean updateApp(App app) {
+        return this.updateById( app);
     }
 
     /**

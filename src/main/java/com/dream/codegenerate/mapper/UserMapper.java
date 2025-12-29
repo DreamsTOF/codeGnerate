@@ -9,7 +9,7 @@ import com.dream.codegenerate.model.entity.User;
  *
  *
  */
-@UseDataSource("mysql")
+@UseDataSource("master")
 public interface UserMapper extends BaseMapper<User> {
 
 }

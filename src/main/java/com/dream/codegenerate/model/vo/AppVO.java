@@ -1,5 +1,7 @@
 package com.dream.codegenerate.model.vo;
 
+import com.dream.codegenerate.utils.smartQuery.SmartFetch;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -69,6 +71,8 @@ public class AppVO implements Serializable {
     /**
      * 创建用户信息
      */
+    @Schema(description = "创建用户的信息")
+    @SmartFetch(targetEntity = UserVO.class, localField = "userId", remoteFieldLink = "id")
     private UserVO user;
 
     private static final long serialVersionUID = 1L;

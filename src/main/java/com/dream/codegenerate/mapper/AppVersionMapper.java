@@ -9,7 +9,7 @@ import com.dream.codegenerate.model.entity.AppVersion;
  *
  *
  */
-@UseDataSource("mysql")
+@UseDataSource("master")
 public interface AppVersionMapper extends BaseMapper<AppVersion> {
 
 }

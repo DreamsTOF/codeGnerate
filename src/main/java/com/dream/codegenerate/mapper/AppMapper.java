@@ -9,7 +9,7 @@ import com.dream.codegenerate.model.entity.App;
  *
  *
  */
-@UseDataSource("mysql")
+@UseDataSource("master")
 public interface AppMapper extends BaseMapper<App> {
 
 }

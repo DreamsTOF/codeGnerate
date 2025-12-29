@@ -1,5 +1,7 @@
 package com.dream.codegenerate.model.vo.appVersion;
 
+import cn.hutool.v7.core.bean.BeanUtil;
+import com.dream.codegenerate.model.entity.AppVersion;
 import com.dream.codegenerate.model.enums.AppVersionStoreTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -66,4 +68,11 @@ public class AppVersionVO {
      * 更新时间
      */
     private LocalDateTime updateTime;
+
+    public static AppVersionVO toAppVersionVO(AppVersion appVersion){
+        AppVersionVO appVersionVO = new AppVersionVO();
+        BeanUtil.copyProperties(appVersion, appVersionVO);
+        return appVersionVO;
+    }
+
 }

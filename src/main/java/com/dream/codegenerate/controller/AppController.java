@@ -22,6 +22,7 @@ import com.dream.codegenerate.ratelimter.annotation.RateLimit;
 import com.dream.codegenerate.ratelimter.enums.RateLimitType;
 import com.dream.codegenerate.service.ProjectDownloadService;
 import com.dream.codegenerate.service.UserService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -186,6 +187,7 @@ public class AppController {
      * @return 更新结果
      */
     @PostMapping("/update")
+    @Operation(summary = "更新应用")
     public BaseResponse<Boolean> updateApp(@RequestBody AppUpdateRequest appUpdateRequest, HttpServletRequest request) {
         if (appUpdateRequest == null || appUpdateRequest.getId() == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -204,7 +206,7 @@ public class AppController {
         app.setAppName(appUpdateRequest.getAppName());
         // 设置编辑时间
         app.setEditTime(LocalDateTime.now());
-        boolean result = appService.updateById(app);
+        boolean result = appService.updateApp(app);
         ThrowUtils.throwIf(!result, ErrorCode.DATA_NOT_FOUND);
         return ResultUtils.success(true);
     }
@@ -334,6 +336,7 @@ public class AppController {
      */
     @PostMapping("/admin/update")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    @Operation(summary = "更新应用")
     public BaseResponse<Boolean> updateAppByAdmin(@RequestBody AppAdminUpdateRequest appAdminUpdateRequest) {
         if (appAdminUpdateRequest == null || appAdminUpdateRequest.getId() == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
@@ -344,9 +347,7 @@ public class AppController {
         ThrowUtils.throwIf(oldApp == null, ErrorCode.DATA_NOT_FOUND);
         App app = new App();
         BeanUtil.copyProperties(appAdminUpdateRequest, app);
-        // 设置编辑时间
-        app.setEditTime(LocalDateTime.now());
-        boolean result = appService.updateById(app);
+        boolean result = appService.updateApp(app);
         ThrowUtils.throwIf(!result, ErrorCode.DATA_NOT_FOUND);
         return ResultUtils.success(true);
     }

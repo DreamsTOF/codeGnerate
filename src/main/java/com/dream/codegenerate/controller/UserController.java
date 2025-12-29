@@ -1,6 +1,7 @@
 package com.dream.codegenerate.controller;
 
 import cn.hutool.v7.core.bean.BeanUtil;
+import com.dream.codegenerate.utils.smartQuery.FlexSmartQuery;
 import com.mybatisflex.core.paginate.Page;
 import com.dream.codegenerate.annotation.AuthCheck;
 import com.dream.codegenerate.common.BaseResponse;
@@ -13,6 +14,7 @@ import com.dream.codegenerate.utils.ThrowUtils;
 import com.dream.codegenerate.model.dto.user.*;
 import com.dream.codegenerate.model.vo.LoginUserVO;
 import com.dream.codegenerate.model.vo.UserVO;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.BeanUtils;
@@ -145,13 +147,14 @@ public class UserController {
      */
     @PostMapping("/update")
     @AuthCheck(mustRole = UserConstant.ADMIN_ROLE)
+    @Operation(summary = "更新用户")
     public BaseResponse<Boolean> updateUser(@RequestBody UserUpdateRequest userUpdateRequest) {
         if (userUpdateRequest == null || userUpdateRequest.getId() == null) {
             throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         User user = new User();
         BeanUtil.copyProperties(userUpdateRequest, user);
-        boolean result = userService.updateById(user);
+        boolean result = userService.updateUser(user);
         ThrowUtils.throwIf(!result, ErrorCode.DATA_NOT_FOUND);
         return ResultUtils.success(true);
     }
@@ -172,6 +175,10 @@ public class UserController {
         // 数据脱敏
         Page<UserVO> userVOPage = new Page<>(pageNum, pageSize, userPage.getTotalRow());
         List<UserVO> userVOList = userService.getUserVOList(userPage.getRecords());
+        Page<UserVO> nextBatch = FlexSmartQuery.of(User.class)
+                .bind(UserVO.class)
+                .autoBuild(userQueryRequest)
+                .page(pageNum, pageSize);
         userVOPage.setRecords(userVOList);
         return ResultUtils.success(userVOPage);
     }
