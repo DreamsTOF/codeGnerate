@@ -119,7 +119,7 @@ public class GlobalExceptionHandler {
             return HttpStatus.UNAUTHORIZED;
         }
         if (code == ErrorCode.RESOURCE_NOT_FOUND.getCode()) return HttpStatus.NOT_FOUND;
-        if (code >= 30000 && code < 40000) return HttpStatus.OK;
+        if (code >= 30000 && code < 40000) return HttpStatus.BAD_REQUEST;
         return HttpStatus.INTERNAL_SERVER_ERROR;
     }
 
