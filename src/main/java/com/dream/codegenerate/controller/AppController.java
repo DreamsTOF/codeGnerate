@@ -22,6 +22,7 @@ import com.dream.codegenerate.ratelimter.annotation.RateLimit;
 import com.dream.codegenerate.ratelimter.enums.RateLimitType;
 import com.dream.codegenerate.service.ProjectDownloadService;
 import com.dream.codegenerate.service.UserService;
+import com.dream.codegenerate.utils.smartQuery.FlexSmartQuery;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
@@ -291,20 +292,42 @@ public class AppController {
             condition = "#appQueryRequest.pageNum <= 10"
     )
     public BaseResponse<Page<AppVO>> listGoodAppVOByPage(@RequestBody AppQueryRequest appQueryRequest) {
+//        ThrowUtils.throwIf(appQueryRequest == null, ErrorCode.PARAMS_ERROR);
+//        // 限制每页最多 20 个
+//        long pageSize = appQueryRequest.getPageSize();
+//        ThrowUtils.throwIf(pageSize > 20, ErrorCode.PARAMS_ERROR, "每页最多查询 20 个应用");
+//        long pageNum = appQueryRequest.getPageNum();
+//        // 只查询精选的应用
+//        appQueryRequest.setPriority(AppConstant.GOOD_APP_PRIORITY);
+//        QueryWrapper queryWrapper = appService.getQueryWrapper(appQueryRequest);
+//        // 分页查询
+//        Page<App> appPage = appService.page(Page.of(pageNum, pageSize), queryWrapper);
+//        // 数据封装
+//        Page<AppVO> appVOPage = new Page<>(pageNum, pageSize, appPage.getTotalRow());
+//        List<AppVO> appVOList = appService.getAppVOList(appPage.getRecords());
+//        appVOPage.setRecords(appVOList);
+//        return ResultUtils.success(appVOPage);
         ThrowUtils.throwIf(appQueryRequest == null, ErrorCode.PARAMS_ERROR);
-        // 限制每页最多 20 个
+
+        // 1. 获取分页参数并校验限制
         long pageSize = appQueryRequest.getPageSize();
-        ThrowUtils.throwIf(pageSize > 20, ErrorCode.PARAMS_ERROR, "每页最多查询 20 个应用");
         long pageNum = appQueryRequest.getPageNum();
-        // 只查询精选的应用
+        ThrowUtils.throwIf(pageSize > 20, ErrorCode.PARAMS_ERROR, "每页最多查询 20 个应用");
+
+        // 2. 设置固定查询条件（只查精选）
+        // 注意：autoBuild 会自动读取 request 中的属性生成 where 条件，所以设置进去即可
         appQueryRequest.setPriority(AppConstant.GOOD_APP_PRIORITY);
-        QueryWrapper queryWrapper = appService.getQueryWrapper(appQueryRequest);
-        // 分页查询
-        Page<App> appPage = appService.page(Page.of(pageNum, pageSize), queryWrapper);
-        // 数据封装
-        Page<AppVO> appVOPage = new Page<>(pageNum, pageSize, appPage.getTotalRow());
-        List<AppVO> appVOList = appService.getAppVOList(appPage.getRecords());
-        appVOPage.setRecords(appVOList);
+
+        // 3. FlexSmartQuery 纯反射查询
+        // - of(App.class): 指定主表实体
+        // - bind(AppVO.class): 绑定 VO，自动解析 VO 上的 @SmartFetch/@Relation 确定 select 和 join
+        // - autoBuild(req): 自动将 request 中的非空字段转换为 SQL 查询条件
+        // - page(num, size): 执行分页，并自动反射组装为 AppVO
+        Page<AppVO> appVOPage = FlexSmartQuery.of(App.class)
+                .bind(AppVO.class)
+                .autoBuild(appQueryRequest)
+                .page(pageNum, pageSize);
+
         return ResultUtils.success(appVOPage);
     }
 
