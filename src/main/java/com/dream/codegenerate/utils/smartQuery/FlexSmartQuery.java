@@ -32,18 +32,15 @@ import com.dream.codegenerate.utils.smartQuery.SmartQueryContext.DtoFieldMeta;
 
 /**
  * 🚀 FlexSmartQuery - The Ultimate Intelligent Query Engine (终极智能版)
- * <p>重构版：逻辑已拆分至 SmartQueryContext, SmartQueryStructure, SmartQueryAssembler</p>
  */
 @CustomLog
 public class FlexSmartQuery<E, R> {
-
 
     @Target(ElementType.FIELD) @Retention(RetentionPolicy.RUNTIME) public @interface PageNo {}
     @Target(ElementType.FIELD) @Retention(RetentionPolicy.RUNTIME) public @interface PageSize {}
     @Target(ElementType.FIELD) @Retention(RetentionPolicy.RUNTIME) public @interface SortField {}
     @Target(ElementType.FIELD) @Retention(RetentionPolicy.RUNTIME) public @interface SortOrder {}
 
-    // 辅助记录类型
     private record OverrideRule(MatchType type, BiFunction<QueryColumn, Object, QueryCondition> customFn) {}
     private record AliasRule(Class<?> targetEntity, String targetProperty, String localKey, MatchType matchType) {}
     private record TargetColumn(String alias, QueryColumn column) {}
@@ -52,6 +49,12 @@ public class FlexSmartQuery<E, R> {
     private final Class<R> resultClass;
     private final QueryWrapper queryWrapper;
     private final SmartQueryStructure structure;
+
+    // Mapper 工具箱
+    private final List<Object> structMappers = new ArrayList<>();
+
+    // 实体工厂工具箱 (默认加载全局配置)
+    private final Map<Class<?>, SmartQueryAssembler.EntityFactory<?>> entityFactories = new HashMap<>();
 
     private final Map<String, OverrideRule> overrides = new HashMap<>();
     private final Map<String, AliasRule> manualAliasRules = new HashMap<>();
@@ -63,6 +66,12 @@ public class FlexSmartQuery<E, R> {
         TableInfo rootTable = SmartQueryContext.getTableInfo(entityClass);
         this.queryWrapper = QueryWrapper.create().from(rootTable.getTableName()).as("t0");
         this.structure = new SmartQueryStructure(entityClass, resultClass);
+
+        // 【核心修改】自动加载全局注册的工厂
+        // 这样用户在调用时不需要 .withFactories() 也能享受加速
+        if (!SmartQueryConfig.FACTORIES.isEmpty()) {
+            this.entityFactories.putAll(SmartQueryConfig.FACTORIES);
+        }
     }
 
     public static <E> FlexSmartQuery<E, E> of(Class<E> entityClass) {
@@ -77,7 +86,43 @@ public class FlexSmartQuery<E, R> {
         FlexSmartQuery<E, V> next = new FlexSmartQuery<>(this.entityClass, voClass);
         next.structure.parseVoTree(voClass, next.structure.getRootNode(), 0);
         next.structure.applyToWrapper(next.queryWrapper, next.structure.getRootNode());
+
+        // 传递当前实例已有的配置 (包括 Mapper 和覆盖的 Factories)
+        next.structMappers.addAll(this.structMappers);
+        next.entityFactories.putAll(this.entityFactories);
+
         return next;
+    }
+
+    // ... withMappers, map, override, autoBuild 等方法保持不变 ...
+
+    public FlexSmartQuery<E, R> withMappers(Object... mappers) {
+        if (mappers != null) {
+            Collections.addAll(this.structMappers, mappers);
+        }
+        return this;
+    }
+
+    public FlexSmartQuery<E, R> withMapper(Object mapper) {
+        return withMappers(mapper);
+    }
+
+    /**
+     * 【性能加速】注册单个实体工厂
+     */
+    public <T> FlexSmartQuery<E, R> registerFactory(Class<T> entityClass, SmartQueryAssembler.EntityFactory<T> factory) {
+        this.entityFactories.put(entityClass, factory);
+        return this;
+    }
+
+    /**
+     * 【性能加速】批量注册实体工厂 (用于内部递归或批量配置)
+     */
+    public FlexSmartQuery<E, R> withFactories(Map<Class<?>, SmartQueryAssembler.EntityFactory<?>> factories) {
+        if (factories != null) {
+            this.entityFactories.putAll(factories);
+        }
+        return this;
     }
 
     public <D, T> FlexSmartQuery<E, R> map(LambdaGetter<D> dtoGetter, Class<T> targetEntity, LambdaGetter<T> targetGetter, LambdaGetter<E> localKeyGetter) {
@@ -111,7 +156,6 @@ public class FlexSmartQuery<E, R> {
             Object val = meta.getValue(field);
             if (!isSafeForQuery(val)) continue;
 
-            // 1. Function Override
             if (overrides.containsKey(field)) {
                 OverrideRule rule = overrides.get(field);
                 if (rule.customFn != null) {
@@ -122,7 +166,6 @@ public class FlexSmartQuery<E, R> {
                 }
             }
 
-            // 2. Explicit Mapping
             AliasRule aliasRule = manualAliasRules.get(field);
             if (aliasRule == null && dtoMetas.containsKey(field) && dtoMetas.get(field).mapping() != null) {
                 QueryMapping m = dtoMetas.get(field).mapping();
@@ -134,7 +177,6 @@ public class FlexSmartQuery<E, R> {
                 continue;
             }
 
-            // 3. Relation Mapping
             if (structure.filterRegistry.containsKey(field)) {
                 FilterMapping mapping = structure.filterRegistry.get(field);
                 MatchType type = resolveMatchType(field, null, val, mapping.type());
@@ -142,7 +184,6 @@ public class FlexSmartQuery<E, R> {
                 continue;
             }
 
-            // 4. Default Root Table Search
             QueryColumn rootCol = SmartQueryContext.getTableInfo(entityClass).getQueryColumnByProperty(field);
             if (rootCol != null) {
                 MatchType type = resolveMatchType(field, dtoMetas.get(field), val, MatchType.CUSTOM);
@@ -168,7 +209,8 @@ public class FlexSmartQuery<E, R> {
 
     public List<R> list() {
         List<Map<String, Object>> rows = SmartQueryContext.getMapper().executeDynamicUnionQuery(queryWrapper.toSQL());
-        return rows.isEmpty() ? Collections.emptyList() : new SmartQueryAssembler<>(resultClass, structure.getRootNode()).reconstruct(rows);
+        // 【核心修改】传递 entityFactories
+        return rows.isEmpty() ? Collections.emptyList() : new SmartQueryAssembler<>(resultClass, structure.getRootNode(), structMappers, entityFactories).reconstruct(rows);
     }
 
     public Page<R> page(Object pageObj) {
@@ -176,44 +218,32 @@ public class FlexSmartQuery<E, R> {
         long size = extractProtocol(pageObj, PageSize.class, Number.class).map(Number::longValue).orElse(10L);
         return page(current, size);
     }
+
     public Page<R> page(long num, long size) {
-        // 【修改点】使用 Db.paginate，它内部会自动注入 $$schemaName，完美解决你的报错
         Page<Row> rowPage = Db.paginate(null, Page.of(num, size), queryWrapper);
-
-        // Row 本质就是 Map<String, Object>，直接转换即可
         List<Map<String, Object>> records = new ArrayList<>(rowPage.getRecords());
-
-        // 后续逻辑不变：交给 Assembler 组装
-        List<R> results = new SmartQueryAssembler<>(resultClass, structure.getRootNode()).reconstruct(records);
-
-        // 返回结果
+        // 【核心修改】传递 entityFactories
+        List<R> results = new SmartQueryAssembler<>(resultClass, structure.getRootNode(), structMappers, entityFactories).reconstruct(records);
         return new Page<>(results, rowPage.getPageNumber(), rowPage.getPageSize(), rowPage.getTotalRow());
     }
+
     public List<R> seek(Object lastId, long size) {
         QueryColumn pkCol = new QueryColumn("t0", structure.getRootNode().pkColName);
         queryWrapper.orderBy(pkCol.asc());
         if (lastId != null) queryWrapper.where(pkCol.gt(lastId));
         queryWrapper.limit(size);
         List<Map<String, Object>> rows = SmartQueryContext.getMapper().executeDynamicUnionQuery(queryWrapper.toSQL());
-        return rows.isEmpty() ? Collections.emptyList() : new SmartQueryAssembler<>(resultClass, structure.getRootNode()).reconstruct(rows);
+        // 【核心修改】传递 entityFactories
+        return rows.isEmpty() ? Collections.emptyList() : new SmartQueryAssembler<>(resultClass, structure.getRootNode(), structMappers, entityFactories).reconstruct(rows);
     }
-    /**
-     * 方便直接传 long ID 的重载
-     */
-    public List<R> seek(long lastId, long size) {
-        return seek((Object) lastId, size);
-    }
-    /**
-     * 方便直接传 String ID 的重载
-     */
-    public List<R> seek(String lastId, long size) {
-        return seek((Object) lastId, size);
-    }
+
+    public List<R> seek(long lastId, long size) { return seek((Object) lastId, size); }
+    public List<R> seek(String lastId, long size) { return seek((Object) lastId, size); }
 
     /* ==============================================================================
-     * Internal Helpers
+     * Internal Helpers (Unchanged)
      * ============================================================================== */
-
+    // ... (applyExplicitMapping, addCrossDbCondition, findColumnInJoinTreeByEntity, findColumnRecursively 等保持不变) ...
     private void applyExplicitMapping(AliasRule rule, String fieldName, Object val, DtoFieldMeta meta) {
         TargetColumn target = findColumnInJoinTreeByEntity(structure.getRootNode(), rule.targetEntity, rule.targetProperty);
         MatchType type = resolveMatchType(fieldName, meta, val, rule.matchType);
