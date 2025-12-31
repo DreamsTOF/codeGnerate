@@ -4,6 +4,7 @@ package com.dream.codegenerate.controller;
 import cn.hutool.v7.core.bean.BeanUtil;
 import cn.hutool.v7.core.text.StrUtil;
 import cn.hutool.v7.json.JSONUtil;
+import com.dream.codegenerate.model.convert.AppConvert;
 import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.dream.codegenerate.annotation.AuthCheck;
@@ -58,6 +59,10 @@ public class AppController {
 
     @Resource
     private ProjectDownloadService projectDownloadService;
+
+    @Resource
+    private AppConvert appConvert;
+
 
 
     @GetMapping(value = "/chat/gen/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
@@ -325,6 +330,7 @@ public class AppController {
         // - page(num, size): 执行分页，并自动反射组装为 AppVO
         Page<AppVO> appVOPage = FlexSmartQuery.of(App.class)
                 .bind(AppVO.class)
+                .withConvert(appConvert)
                 .autoBuild(appQueryRequest)
                 .page(pageNum, pageSize);
 

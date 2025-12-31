@@ -31,7 +31,7 @@ import com.dream.codegenerate.utils.smartQuery.SmartQueryStructure.FilterMapping
 import com.dream.codegenerate.utils.smartQuery.SmartQueryContext.DtoFieldMeta;
 
 /**
- * 🚀 FlexSmartQuery - The Ultimate Intelligent Query Engine (终极智能版)
+ * 🚀 FlexSmartQuery - The Ultimate Intelligent Query Engine
  */
 @CustomLog
 public class FlexSmartQuery<E, R> {
@@ -50,10 +50,7 @@ public class FlexSmartQuery<E, R> {
     private final QueryWrapper queryWrapper;
     private final SmartQueryStructure structure;
 
-    // Mapper 工具箱
     private final List<Object> structMappers = new ArrayList<>();
-
-    // 实体工厂工具箱 (默认加载全局配置)
     private final Map<Class<?>, SmartQueryAssembler.EntityFactory<?>> entityFactories = new HashMap<>();
 
     private final Map<String, OverrideRule> overrides = new HashMap<>();
@@ -67,8 +64,6 @@ public class FlexSmartQuery<E, R> {
         this.queryWrapper = QueryWrapper.create().from(rootTable.getTableName()).as("t0");
         this.structure = new SmartQueryStructure(entityClass, resultClass);
 
-        // 【核心修改】自动加载全局注册的工厂
-        // 这样用户在调用时不需要 .withFactories() 也能享受加速
         if (!SmartQueryConfig.FACTORIES.isEmpty()) {
             this.entityFactories.putAll(SmartQueryConfig.FACTORIES);
         }
@@ -79,7 +74,7 @@ public class FlexSmartQuery<E, R> {
     }
 
     /* ==============================================================================
-     * API (Fluent Interface)
+     * API
      * ============================================================================== */
 
     public <V> FlexSmartQuery<E, V> bind(Class<V> voClass) {
@@ -87,37 +82,32 @@ public class FlexSmartQuery<E, R> {
         next.structure.parseVoTree(voClass, next.structure.getRootNode(), 0);
         next.structure.applyToWrapper(next.queryWrapper, next.structure.getRootNode());
 
-        // 传递当前实例已有的配置 (包括 Mapper 和覆盖的 Factories)
         next.structMappers.addAll(this.structMappers);
         next.entityFactories.putAll(this.entityFactories);
 
         return next;
     }
 
-    // ... withMappers, map, override, autoBuild 等方法保持不变 ...
-
-    public FlexSmartQuery<E, R> withMappers(Object... mappers) {
+    /**
+     * 注册 Mapper 实例
+     * 推荐传递单例，如：withMapper(AppConvert.INSTANCE)
+     */
+    public FlexSmartQuery<E, R> withConverts(Object... mappers) {
         if (mappers != null) {
             Collections.addAll(this.structMappers, mappers);
         }
         return this;
     }
 
-    public FlexSmartQuery<E, R> withMapper(Object mapper) {
-        return withMappers(mapper);
+    public FlexSmartQuery<E, R> withConvert(Object mapper) {
+        return withConverts(mapper);
     }
 
-    /**
-     * 【性能加速】注册单个实体工厂
-     */
     public <T> FlexSmartQuery<E, R> registerFactory(Class<T> entityClass, SmartQueryAssembler.EntityFactory<T> factory) {
         this.entityFactories.put(entityClass, factory);
         return this;
     }
 
-    /**
-     * 【性能加速】批量注册实体工厂 (用于内部递归或批量配置)
-     */
     public FlexSmartQuery<E, R> withFactories(Map<Class<?>, SmartQueryAssembler.EntityFactory<?>> factories) {
         if (factories != null) {
             this.entityFactories.putAll(factories);
@@ -209,7 +199,6 @@ public class FlexSmartQuery<E, R> {
 
     public List<R> list() {
         List<Map<String, Object>> rows = SmartQueryContext.getMapper().executeDynamicUnionQuery(queryWrapper.toSQL());
-        // 【核心修改】传递 entityFactories
         return rows.isEmpty() ? Collections.emptyList() : new SmartQueryAssembler<>(resultClass, structure.getRootNode(), structMappers, entityFactories).reconstruct(rows);
     }
 
@@ -222,7 +211,6 @@ public class FlexSmartQuery<E, R> {
     public Page<R> page(long num, long size) {
         Page<Row> rowPage = Db.paginate(null, Page.of(num, size), queryWrapper);
         List<Map<String, Object>> records = new ArrayList<>(rowPage.getRecords());
-        // 【核心修改】传递 entityFactories
         List<R> results = new SmartQueryAssembler<>(resultClass, structure.getRootNode(), structMappers, entityFactories).reconstruct(records);
         return new Page<>(results, rowPage.getPageNumber(), rowPage.getPageSize(), rowPage.getTotalRow());
     }
@@ -233,7 +221,6 @@ public class FlexSmartQuery<E, R> {
         if (lastId != null) queryWrapper.where(pkCol.gt(lastId));
         queryWrapper.limit(size);
         List<Map<String, Object>> rows = SmartQueryContext.getMapper().executeDynamicUnionQuery(queryWrapper.toSQL());
-        // 【核心修改】传递 entityFactories
         return rows.isEmpty() ? Collections.emptyList() : new SmartQueryAssembler<>(resultClass, structure.getRootNode(), structMappers, entityFactories).reconstruct(rows);
     }
 
@@ -241,9 +228,8 @@ public class FlexSmartQuery<E, R> {
     public List<R> seek(String lastId, long size) { return seek((Object) lastId, size); }
 
     /* ==============================================================================
-     * Internal Helpers (Unchanged)
+     * Internal Helpers
      * ============================================================================== */
-    // ... (applyExplicitMapping, addCrossDbCondition, findColumnInJoinTreeByEntity, findColumnRecursively 等保持不变) ...
     private void applyExplicitMapping(AliasRule rule, String fieldName, Object val, DtoFieldMeta meta) {
         TargetColumn target = findColumnInJoinTreeByEntity(structure.getRootNode(), rule.targetEntity, rule.targetProperty);
         MatchType type = resolveMatchType(fieldName, meta, val, rule.matchType);
