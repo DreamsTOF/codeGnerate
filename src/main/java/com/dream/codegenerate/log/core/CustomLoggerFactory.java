@@ -15,7 +15,7 @@ import java.util.concurrent.ConcurrentMap;
 public class CustomLoggerFactory implements ILoggerFactory {
 
     // 缓存 Logger 实例，确保线程安全和高性能
-    private final ConcurrentMap<String, Logger> loggerMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Logger> loggerMap = new ConcurrentHashMap<1>();
 
     @Override
     public Logger getLogger(String name) {

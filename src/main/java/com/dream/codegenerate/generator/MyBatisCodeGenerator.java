@@ -19,10 +19,10 @@ import java.util.Map;
 public class MyBatisCodeGenerator {
 
     // 要生成的表名 (按需修改)
-    private static final String[] TABLE_NAMES = {"app_version","chat_history","user","access_key"};
+    private static final String[] TABLE_NAMES = {"app_version"};
 
     public static void main(String[] args) {
-        Dict dict = YamlUtil.loadByPath("application.yml");
+        Dict dict = YamlUtil.loadByPath("application-local.yml");
         Map<String, Object> dataSourceConfig = dict.getByPath("mybatis-flex.datasource.master");
 
         if (dataSourceConfig == null) {
